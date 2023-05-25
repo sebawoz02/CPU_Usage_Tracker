@@ -117,6 +117,32 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named reader
+
+# Build rule for target.
+reader: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 reader
+.PHONY : reader
+
+# fast build rule for target.
+reader/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/reader.dir/build.make CMakeFiles/reader.dir/build
+.PHONY : reader/fast
+
+#=============================================================================
+# Target rules for targets named queue
+
+# Build rule for target.
+queue: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 queue
+.PHONY : queue
+
+# fast build rule for target.
+queue/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/queue.dir/build.make CMakeFiles/queue.dir/build
+.PHONY : queue/fast
+
+#=============================================================================
 # Target rules for targets named CUT
 
 # Build rule for target.
@@ -171,8 +197,7 @@ queue.o: queue.c.o
 
 # target to build an object file
 queue.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/queue.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/queue.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/queue.dir/build.make CMakeFiles/queue.dir/queue.c.o
 .PHONY : queue.c.o
 
 queue.i: queue.c.i
@@ -180,8 +205,7 @@ queue.i: queue.c.i
 
 # target to preprocess a source file
 queue.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/queue.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/queue.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/queue.dir/build.make CMakeFiles/queue.dir/queue.c.i
 .PHONY : queue.c.i
 
 queue.s: queue.c.s
@@ -189,8 +213,7 @@ queue.s: queue.c.s
 
 # target to generate assembly for a file
 queue.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/queue.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/queue.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/queue.dir/build.make CMakeFiles/queue.dir/queue.c.s
 .PHONY : queue.c.s
 
 reader.o: reader.c.o
@@ -198,8 +221,7 @@ reader.o: reader.c.o
 
 # target to build an object file
 reader.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/reader.c.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/reader.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/reader.dir/build.make CMakeFiles/reader.dir/reader.c.o
 .PHONY : reader.c.o
 
 reader.i: reader.c.i
@@ -207,8 +229,7 @@ reader.i: reader.c.i
 
 # target to preprocess a source file
 reader.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/reader.c.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/reader.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/reader.dir/build.make CMakeFiles/reader.dir/reader.c.i
 .PHONY : reader.c.i
 
 reader.s: reader.c.s
@@ -216,8 +237,7 @@ reader.s: reader.c.s
 
 # target to generate assembly for a file
 reader.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/reader.c.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/reader.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/reader.dir/build.make CMakeFiles/reader.dir/reader.c.s
 .PHONY : reader.c.s
 
 tests/test_main.o: tests/test_main.c.o
@@ -301,6 +321,8 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... CUT"
+	@echo "... queue"
+	@echo "... reader"
 	@echo "... test"
 	@echo "... main.o"
 	@echo "... main.i"

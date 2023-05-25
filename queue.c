@@ -40,7 +40,7 @@ Queue* queue_create_new(const size_t capacity, const size_t data_size)
         return NULL;
     }
 
-    q = malloc(sizeof(*q) + (data_size*capacity));
+    q = malloc(sizeof(*q) + (data_size*capacity));  // Flexible Array Member
     if(q == NULL){
         return NULL;
     }
