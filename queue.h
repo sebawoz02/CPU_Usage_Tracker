@@ -14,4 +14,7 @@ bool queue_is_full(const Queue * q);
 bool queue_is_empty(const Queue* q);
 bool queue_is_corrupted(const Queue* q);
 
+int queue_enqueue(Queue* restrict q, void* restrict elem);
+int queue_dequeue(Queue* restrict q, void* restrict elem);
+
 #endif //CPU_USAGE_TRACKER_QUEUE_H

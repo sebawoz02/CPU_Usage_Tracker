@@ -1,4 +1,5 @@
-#include "assert.h"
+#include <assert.h>
+#include <stdlib.h>
 
 #include "../queue.h"
 #include "test_queue.h"
@@ -53,11 +54,116 @@ static void test_queue_full_empty_corrupted(void){
     queue_delete(q);
 }
 
+static void test_queue_enqueue(void){
+    size_t value_to_insert = 45;
+    register const size_t no_elems = 10;
+    register const size_t elem_size = sizeof(int);
+
+    Queue* const q = queue_create_new(no_elems, elem_size);
+    assert(q != NULL);
+
+    assert(queue_enqueue(NULL, &value_to_insert) != 0);
+    assert(queue_enqueue(q, NULL) != 0);
+    assert(queue_enqueue(NULL, NULL) != 0);
+
+    assert(queue_is_empty(q));
+    assert(!queue_is_full(q));
+
+    assert(queue_enqueue(q, &value_to_insert) == 0);
+
+    assert((volatile int)value_to_insert == 45);
+
+    assert(!queue_is_empty(q));
+    assert(!queue_is_full(q));
+
+    queue_delete(q);
+}
+
+static void test_queue_dequeue(void){
+    size_t value_to_insert = 45;
+    register const size_t no_elems = 10;
+    register const size_t elem_size = sizeof(size_t);
+    size_t val = 0;
+
+    Queue* const q = queue_create_new(no_elems, elem_size);
+    assert(q != NULL);
+    assert(!queue_is_corrupted(q));
+
+    assert(queue_dequeue(q, &val) != 0);
+    assert(queue_is_empty(q));
+    assert(!queue_is_full(q));
+
+    assert(queue_enqueue(q, &value_to_insert) == 0);
+    assert(!queue_is_empty(q));
+    assert(!queue_is_full(q));
+
+    assert(queue_dequeue(NULL, &val) != 0);
+    assert(queue_dequeue(NULL, NULL) != 0);
+    assert(queue_dequeue(q, NULL) != 0);
+
+    assert(queue_dequeue(q, &val) == 0);
+
+    assert(val == value_to_insert);
+
+    assert(queue_is_empty(q));
+    assert(!queue_is_full(q));
+
+    queue_delete(q);
+}
+
+static void test_queue_multiple_enqueue_dequeue(void){
+    size_t* values_to_insert = malloc(sizeof(size_t)*4);
+    values_to_insert[0] = 45;
+    values_to_insert[1] = 2;
+    values_to_insert[2] = 23;
+    values_to_insert[3] = 15;
+    register const size_t no_elems = 10;
+    register const size_t elem_size = sizeof(size_t);
+    size_t val = 0;
+
+    Queue* q = queue_create_new(no_elems, elem_size);
+    assert(q != NULL);
+
+    assert(queue_enqueue(q, &values_to_insert[0])==0);
+    assert(queue_enqueue(q, &values_to_insert[1])==0);
+
+    assert(!queue_is_full(q));
+    assert(!queue_is_empty(q));
+
+    assert(queue_enqueue(q, &values_to_insert[2])==0);
+    assert(queue_enqueue(q, &values_to_insert[3])==0);
+
+    assert(!queue_is_full(q));
+    assert(!queue_is_empty(q));
+
+    assert(queue_dequeue(q, &val) == 0);
+    assert(val==45);
+    assert(queue_dequeue(q, &val) == 0);
+    assert(val==2);
+
+    assert(!queue_is_full(q));
+    assert(!queue_is_empty(q));
+
+    assert(queue_dequeue(q, &val) == 0);
+    assert(val==23);
+    assert(queue_dequeue(q, &val) == 0);
+    assert(val==15);
+
+    assert(!queue_is_full(q));
+    assert(queue_is_empty(q));
+
+    queue_delete(q);
+    free(values_to_insert);
+}
+
 void test_queue_main(void)
 {
     test_queue_create();
     test_queue_delete();
     test_queue_full_empty_corrupted();
+    test_queue_enqueue();
+    test_queue_dequeue();
+    test_queue_multiple_enqueue_dequeue();
 }
 
 

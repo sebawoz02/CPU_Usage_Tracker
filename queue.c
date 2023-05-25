@@ -2,11 +2,11 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "queue.h"
 
 #define QUEUE_MAGIC_NUMBER (int64_t) 0xdeadbeef
-
 
 
 struct Queue {
@@ -115,4 +115,58 @@ bool queue_is_corrupted(const Queue* q){
     if (q == NULL)
         return true;
     return q->magic != QUEUE_MAGIC_NUMBER;
+}
+
+
+/**
+ * Adds new element to the queue.
+ * @param q - queue
+ * @param elem - element to add
+ * @return 0 if added successfully else -1.
+ */
+int queue_enqueue(Queue* restrict const q, void* restrict const elem){
+
+    if(q == NULL)
+        return -1;
+    if(elem == NULL)
+        return -1;
+    if(queue_is_full(q))
+        return -1;
+
+    pthread_mutex_lock(&q->mutex);
+
+    uint8_t* const ptr = &q->buffer[q->head*q->elem_size];
+    memcpy(ptr, elem, q->elem_size);
+
+    q->cur_no_elements++;
+    q->head = (q->head + 1) % q->capacity;
+
+    pthread_mutex_unlock(&q->mutex);
+
+    return 0;
+}
+
+/**
+ * Removes element from the queue.
+ * @param q - queue
+ * @param elem - element to delete
+ * @return 0 if removed successfully else -1.
+ */
+int queue_dequeue(Queue* restrict const q, void* restrict elem){
+    if(q == NULL)
+        return -1;
+    if(elem == NULL)
+        return -1;
+    if(queue_is_corrupted(q))
+        return -1;
+    if(queue_is_empty(q))
+        return -1;
+
+    uint8_t * const ptr = &q->buffer[q->tail * q->elem_size];
+    memcpy(elem, ptr, q->elem_size);
+
+    q->cur_no_elements--;
+    q->tail = (q->tail + 1) % q->capacity;
+
+    return 0;
 }
