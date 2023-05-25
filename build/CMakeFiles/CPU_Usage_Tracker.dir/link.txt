@@ -1,0 +1,1 @@
+clang -Weverything CMakeFiles/CPU_Usage_Tracker.dir/main.c.o -o CPU_Usage_Tracker 

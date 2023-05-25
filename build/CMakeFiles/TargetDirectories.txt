@@ -1,0 +1,3 @@
+/home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/CPU_Usage_Tracker.dir
+/home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/edit_cache.dir
+/home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/rebuild_cache.dir
