@@ -166,6 +166,33 @@ main.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/main.c.s
 .PHONY : main.c.s
 
+queue.o: queue.c.o
+.PHONY : queue.o
+
+# target to build an object file
+queue.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/queue.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/queue.c.o
+.PHONY : queue.c.o
+
+queue.i: queue.c.i
+.PHONY : queue.i
+
+# target to preprocess a source file
+queue.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/queue.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/queue.c.i
+.PHONY : queue.c.i
+
+queue.s: queue.c.s
+.PHONY : queue.s
+
+# target to generate assembly for a file
+queue.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/queue.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/queue.c.s
+.PHONY : queue.c.s
+
 tests/test_main.o: tests/test_main.c.o
 .PHONY : tests/test_main.o
 
@@ -227,6 +254,9 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... queue.o"
+	@echo "... queue.i"
+	@echo "... queue.s"
 	@echo "... tests/test_main.o"
 	@echo "... tests/test_main.i"
 	@echo "... tests/test_main.s"

@@ -7,6 +7,8 @@
 
 #define QUEUE_MAGIC_NUMBER (int64_t) 0xdeadbeef
 
+
+
 struct Queue {
     uint64_t magic;
     pthread_mutex_t mutex;  // thread safe dequeue and enqueue
@@ -70,4 +72,47 @@ void queue_delete(Queue* q)
         return;
     pthread_mutex_destroy(&q->mutex);
     free(q);
+}
+
+/**
+ * Determines whether the queue is full.
+ * @param q - queue
+ * @return True if full else false.
+ */
+bool queue_is_full(const Queue * q){
+    if(q == NULL)
+        return false;
+    if(queue_is_corrupted(q))
+        return false;
+
+    if(q->cur_no_elements == q->capacity)
+        return true;
+    return false;
+}
+
+/**
+ * Determines whether the queue is empty.
+ * @param q - queue
+ * @return True if empty else false.
+ */
+bool queue_is_empty(const Queue* q){
+    if(q == NULL)
+        return false;
+    if(queue_is_corrupted(q))
+        return false;
+
+    if(q->cur_no_elements == 0)
+        return true;
+    return false;
+}
+
+/**
+ * Determines whether the queue is corrupted.
+ * @param q - queue
+ * @return True if corrupted else false.
+ */
+bool queue_is_corrupted(const Queue* q){
+    if (q == NULL)
+        return true;
+    return q->magic != QUEUE_MAGIC_NUMBER;
 }
