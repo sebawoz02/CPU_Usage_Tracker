@@ -162,11 +162,15 @@ int queue_dequeue(Queue* restrict const q, void* restrict elem){
     if(queue_is_empty(q))
         return -1;
 
+    pthread_mutex_lock(&q->mutex);
+
     uint8_t * const ptr = &q->buffer[q->tail * q->elem_size];
     memcpy(elem, ptr, q->elem_size);
 
     q->cur_no_elements--;
     q->tail = (q->tail + 1) % q->capacity;
+
+    pthread_mutex_unlock(&q->mutex);
 
     return 0;
 }
