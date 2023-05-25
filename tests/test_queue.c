@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "../reader.h"
 #include "../queue.h"
 #include "test_queue.h"
 
@@ -21,6 +22,7 @@ static void test_queue_full_empty_corrupted(void);
 static void test_queue_dequeue(void);
 static void test_queue_enqueue(void);
 static void test_queue_multiple_enqueue_dequeue(void);
+static void test_queue_with_cpurawstats(void);
 
 
 static void test_queue_create(void)
@@ -160,6 +162,33 @@ static void test_queue_multiple_enqueue_dequeue(void){
     free(values_to_insert);
 }
 
+static void test_queue_with_cpurawstats(void){
+    size_t cpus = reader_get_no_cpus();
+    CPURawStats stats = reader_load_data(cpus);
+    Queue* q = queue_create_new(2, sizeof(stats));
+    assert(q != NULL);
+    CPURawStats dequeued_stats;
+
+    assert(queue_enqueue(q, &stats) == 0);
+
+    stats = reader_load_data(cpus);
+
+    assert(queue_enqueue(q, &stats) == 0);
+
+    assert(queue_is_full(q));
+
+    assert(queue_dequeue(q, &dequeued_stats) == 0);
+    free(dequeued_stats.cpus);
+
+    assert(queue_dequeue(q, &dequeued_stats) == 0);
+
+    free(dequeued_stats.cpus);
+
+    assert(queue_is_empty(q));
+
+    queue_delete(q);
+}
+
 void test_queue_main(void)
 {
     test_queue_create();
@@ -168,6 +197,7 @@ void test_queue_main(void)
     test_queue_enqueue();
     test_queue_dequeue();
     test_queue_multiple_enqueue_dequeue();
+    test_queue_with_cpurawstats();
 }
 
 
