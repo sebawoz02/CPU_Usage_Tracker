@@ -117,24 +117,37 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named CPU_Usage_Tracker
+# Target rules for targets named CUT
 
 # Build rule for target.
-CPU_Usage_Tracker: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CPU_Usage_Tracker
-.PHONY : CPU_Usage_Tracker
+CUT: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CUT
+.PHONY : CUT
 
 # fast build rule for target.
-CPU_Usage_Tracker/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Usage_Tracker.dir/build.make CMakeFiles/CPU_Usage_Tracker.dir/build
-.PHONY : CPU_Usage_Tracker/fast
+CUT/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/build
+.PHONY : CUT/fast
+
+#=============================================================================
+# Target rules for targets named test
+
+# Build rule for target.
+test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test
+.PHONY : test
+
+# fast build rule for target.
+test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/build
+.PHONY : test/fast
 
 main.o: main.c.o
 .PHONY : main.o
 
 # target to build an object file
 main.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Usage_Tracker.dir/build.make CMakeFiles/CPU_Usage_Tracker.dir/main.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/main.c.o
 .PHONY : main.c.o
 
 main.i: main.c.i
@@ -142,7 +155,7 @@ main.i: main.c.i
 
 # target to preprocess a source file
 main.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Usage_Tracker.dir/build.make CMakeFiles/CPU_Usage_Tracker.dir/main.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/main.c.i
 .PHONY : main.c.i
 
 main.s: main.c.s
@@ -150,8 +163,56 @@ main.s: main.c.s
 
 # target to generate assembly for a file
 main.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Usage_Tracker.dir/build.make CMakeFiles/CPU_Usage_Tracker.dir/main.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/main.c.s
 .PHONY : main.c.s
+
+tests/test_main.o: tests/test_main.c.o
+.PHONY : tests/test_main.o
+
+# target to build an object file
+tests/test_main.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_main.c.o
+.PHONY : tests/test_main.c.o
+
+tests/test_main.i: tests/test_main.c.i
+.PHONY : tests/test_main.i
+
+# target to preprocess a source file
+tests/test_main.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_main.c.i
+.PHONY : tests/test_main.c.i
+
+tests/test_main.s: tests/test_main.c.s
+.PHONY : tests/test_main.s
+
+# target to generate assembly for a file
+tests/test_main.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_main.c.s
+.PHONY : tests/test_main.c.s
+
+tests/test_queue.o: tests/test_queue.c.o
+.PHONY : tests/test_queue.o
+
+# target to build an object file
+tests/test_queue.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_queue.c.o
+.PHONY : tests/test_queue.c.o
+
+tests/test_queue.i: tests/test_queue.c.i
+.PHONY : tests/test_queue.i
+
+# target to preprocess a source file
+tests/test_queue.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_queue.c.i
+.PHONY : tests/test_queue.c.i
+
+tests/test_queue.s: tests/test_queue.c.s
+.PHONY : tests/test_queue.s
+
+# target to generate assembly for a file
+tests/test_queue.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_queue.c.s
+.PHONY : tests/test_queue.c.s
 
 # Help Target
 help:
@@ -161,10 +222,17 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... CPU_Usage_Tracker"
+	@echo "... CUT"
+	@echo "... test"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... tests/test_main.o"
+	@echo "... tests/test_main.i"
+	@echo "... tests/test_main.s"
+	@echo "... tests/test_queue.o"
+	@echo "... tests/test_queue.i"
+	@echo "... tests/test_queue.s"
 .PHONY : help
 
 
