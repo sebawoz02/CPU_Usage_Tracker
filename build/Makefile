@@ -193,6 +193,33 @@ queue.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/queue.c.s
 .PHONY : queue.c.s
 
+reader.o: reader.c.o
+.PHONY : reader.o
+
+# target to build an object file
+reader.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/reader.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/reader.c.o
+.PHONY : reader.c.o
+
+reader.i: reader.c.i
+.PHONY : reader.i
+
+# target to preprocess a source file
+reader.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/reader.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/reader.c.i
+.PHONY : reader.c.i
+
+reader.s: reader.c.s
+.PHONY : reader.s
+
+# target to generate assembly for a file
+reader.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/reader.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/reader.c.s
+.PHONY : reader.c.s
+
 tests/test_main.o: tests/test_main.c.o
 .PHONY : tests/test_main.o
 
@@ -241,6 +268,30 @@ tests/test_queue.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_queue.c.s
 .PHONY : tests/test_queue.c.s
 
+tests/test_reader.o: tests/test_reader.c.o
+.PHONY : tests/test_reader.o
+
+# target to build an object file
+tests/test_reader.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_reader.c.o
+.PHONY : tests/test_reader.c.o
+
+tests/test_reader.i: tests/test_reader.c.i
+.PHONY : tests/test_reader.i
+
+# target to preprocess a source file
+tests/test_reader.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_reader.c.i
+.PHONY : tests/test_reader.c.i
+
+tests/test_reader.s: tests/test_reader.c.s
+.PHONY : tests/test_reader.s
+
+# target to generate assembly for a file
+tests/test_reader.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_reader.c.s
+.PHONY : tests/test_reader.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -257,12 +308,18 @@ help:
 	@echo "... queue.o"
 	@echo "... queue.i"
 	@echo "... queue.s"
+	@echo "... reader.o"
+	@echo "... reader.i"
+	@echo "... reader.s"
 	@echo "... tests/test_main.o"
 	@echo "... tests/test_main.i"
 	@echo "... tests/test_main.s"
 	@echo "... tests/test_queue.o"
 	@echo "... tests/test_queue.i"
 	@echo "... tests/test_queue.s"
+	@echo "... tests/test_reader.o"
+	@echo "... tests/test_reader.i"
+	@echo "... tests/test_reader.s"
 .PHONY : help
 
 

@@ -18,6 +18,10 @@
 static void test_queue_create(void);
 static void test_queue_delete(void);
 static void test_queue_full_empty_corrupted(void);
+static void test_queue_dequeue(void);
+static void test_queue_enqueue(void);
+static void test_queue_multiple_enqueue_dequeue(void);
+
 
 static void test_queue_create(void)
 {
