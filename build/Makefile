@@ -130,6 +130,19 @@ reader/fast:
 .PHONY : reader/fast
 
 #=============================================================================
+# Target rules for targets named analyzer
+
+# Build rule for target.
+analyzer: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 analyzer
+.PHONY : analyzer
+
+# fast build rule for target.
+analyzer/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/analyzer.dir/build.make CMakeFiles/analyzer.dir/build
+.PHONY : analyzer/fast
+
+#=============================================================================
 # Target rules for targets named queue
 
 # Build rule for target.
@@ -167,6 +180,30 @@ test: cmake_check_build_system
 test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/build
 .PHONY : test/fast
+
+analyzer.o: analyzer.c.o
+.PHONY : analyzer.o
+
+# target to build an object file
+analyzer.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/analyzer.dir/build.make CMakeFiles/analyzer.dir/analyzer.c.o
+.PHONY : analyzer.c.o
+
+analyzer.i: analyzer.c.i
+.PHONY : analyzer.i
+
+# target to preprocess a source file
+analyzer.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/analyzer.dir/build.make CMakeFiles/analyzer.dir/analyzer.c.i
+.PHONY : analyzer.c.i
+
+analyzer.s: analyzer.c.s
+.PHONY : analyzer.s
+
+# target to generate assembly for a file
+analyzer.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/analyzer.dir/build.make CMakeFiles/analyzer.dir/analyzer.c.s
+.PHONY : analyzer.c.s
 
 main.o: main.c.o
 .PHONY : main.o
@@ -321,9 +358,13 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... CUT"
+	@echo "... analyzer"
 	@echo "... queue"
 	@echo "... reader"
 	@echo "... test"
+	@echo "... analyzer.o"
+	@echo "... analyzer.i"
+	@echo "... analyzer.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
