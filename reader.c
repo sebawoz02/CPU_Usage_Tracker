@@ -16,6 +16,7 @@ static char* reader_load_to_buffer(void)
 {
     bool was_error = true;
     size_t buff_size = 1024;
+    size_t bytes_read = 0;
     char* buffer = malloc(buff_size);
     if(buffer == NULL)
     {
@@ -27,7 +28,7 @@ static char* reader_load_to_buffer(void)
         FILE* file = fopen("/proc/stat", "r");
         if(file == NULL)
             continue;
-        fread(buffer, sizeof(char), buff_size, file);
+        bytes_read = fread(buffer, sizeof(char), buff_size, file);
         was_error = ferror(file) || !feof(file);
 
         // End of the file not reached or stream error
@@ -45,6 +46,7 @@ static char* reader_load_to_buffer(void)
         }
         fclose(file);
     }
+    buffer[bytes_read] = '\0';  // Add null character to mark the end of buffer data
     return buffer;
 }
 
@@ -64,7 +66,8 @@ size_t reader_get_no_cpus(void)
     size_t cpus = 0;
     const char word[3] = "cpu";
     const size_t word_len = 3;
-    for(size_t i = 0; i <= strlen(buffer)- word_len; i++)
+    const size_t buf_len = strlen(buffer);
+    for(size_t i = 0; i <= buf_len - word_len; i++)
     {
         found = true;
         for (size_t j = 0; j < word_len; ++j) {
