@@ -1,6 +1,6 @@
 # CUT - CPU Usage Tracker
 
-Multithreaded program written in c99 standard for any Linux distribution.
+Multithreaded program for any Linux distribution that calculates CPU usage from /proc/stat.
 The producer-consumer problem between threads is presented.
 - Reader thread ( producer ) - is responsible for reading the data from /proc/stat, putting it into the appropriate structure and then sending it for "consumption".
 - Analyzer thread ( consumer & producer ) - is responsible for calculating the percentage cpu usage from the data in the structure prepared by the reader and then sending it to the printer.
