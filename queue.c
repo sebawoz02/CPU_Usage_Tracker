@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,7 +10,7 @@
 
 struct Queue {
     uint64_t magic;
-    pthread_mutex_t mutex;  // thread safe dequeue and enqueue
+    pthread_mutex_t mutex;  // mutex used to protect dequeue and enqueue is created with the structure
 
     size_t tail;
     size_t head;
@@ -133,15 +132,11 @@ int queue_enqueue(Queue* restrict const q, void* restrict const elem){
     if(queue_is_full(q))
         return -1;
 
-    pthread_mutex_lock(&q->mutex);
-
     uint8_t* const ptr = &q->buffer[q->head*q->elem_size];
     memcpy(ptr, elem, q->elem_size);
 
     q->cur_no_elements++;
     q->head = (q->head + 1) % q->capacity;
-
-    pthread_mutex_unlock(&q->mutex);
 
     return 0;
 }
@@ -162,15 +157,20 @@ int queue_dequeue(Queue* restrict const q, void* restrict elem){
     if(queue_is_empty(q))
         return -1;
 
-    pthread_mutex_lock(&q->mutex);
-
     uint8_t * const ptr = &q->buffer[q->tail * q->elem_size];
     memcpy(elem, ptr, q->elem_size);
 
     q->cur_no_elements--;
     q->tail = (q->tail + 1) % q->capacity;
 
-    pthread_mutex_unlock(&q->mutex);
-
     return 0;
 }
+
+/**
+ * Mutex is the only struct element which can be edited
+ * @param q - queue which mutex will be returned
+ */
+pthread_mutex_t* queue_get_mutex(Queue* q){
+    return &q->mutex;
+}
+
