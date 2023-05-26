@@ -39,17 +39,15 @@ Queue* queue_create_new(const size_t capacity, const size_t data_size)
 {
     Queue* q;
 
-    if(capacity == 0){
+    if(capacity == 0)
         return NULL;
-    }
-    if(data_size == 0){
+
+    if(data_size == 0)
         return NULL;
-    }
 
     q = malloc(sizeof(*q) + (data_size*capacity));  // Flexible Array Member
-    if(q == NULL){
+    if(q == NULL)
         return NULL;
-    }
 
     if(pthread_mutex_init(&q->mutex, NULL)!=0)
     {
@@ -102,7 +100,8 @@ void queue_delete(Queue* q)
  * @param q - queue
  * @return True if full else false.
  */
-bool queue_is_full(const Queue * q){
+bool queue_is_full(const Queue * q)
+{
     if(q == NULL)
         return false;
     if(queue_is_corrupted(q))
@@ -118,7 +117,8 @@ bool queue_is_full(const Queue * q){
  * @param q - queue
  * @return True if empty else false.
  */
-bool queue_is_empty(const Queue* q){
+bool queue_is_empty(const Queue* q)
+{
     if(q == NULL)
         return false;
     if(queue_is_corrupted(q))
@@ -134,7 +134,8 @@ bool queue_is_empty(const Queue* q){
  * @param q - queue
  * @return True if corrupted else false.
  */
-bool queue_is_corrupted(const Queue* q){
+bool queue_is_corrupted(const Queue* q)
+{
     if (q == NULL)
         return true;
     return q->magic != QUEUE_MAGIC_NUMBER;
@@ -148,8 +149,8 @@ bool queue_is_corrupted(const Queue* q){
  * @param elem - element to add
  * @return 0 if added successfully else -1.
  */
-int queue_enqueue(Queue* restrict const q, void* restrict const elem){
-
+int queue_enqueue(Queue* restrict const q, void* restrict const elem)
+{
     if(q == NULL)
         return -1;
     if(elem == NULL)
@@ -176,7 +177,8 @@ int queue_enqueue(Queue* restrict const q, void* restrict const elem){
  * @param elem - element to delete
  * @return 0 if removed successfully else -1.
  */
-int queue_dequeue(Queue* restrict const q, void* restrict elem){
+int queue_dequeue(Queue* restrict const q, void* restrict elem)
+{
     if(q == NULL)
         return -1;
     if(elem == NULL)

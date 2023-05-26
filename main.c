@@ -131,7 +131,8 @@ static void* analyzer_func(void* args)
  * Printer thread function.
  * Responsible for displaying prepared data in the terminal.
  */
-static void* printer_func(void* args) {
+static void* printer_func(void* args)
+{
     // Only main thread needs to set the flag
     sigset_t threadMask;
     sigemptyset(&threadMask);
@@ -140,40 +141,43 @@ static void* printer_func(void* args) {
 
     system("clear");
 
-    // printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");
+    // printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");  // print here using tput
     double *to_print;
-    while(g_termination_req == 0){
+    while(g_termination_req == 0)
+    {
         size_t i;
         // Remove from buffer
-        if (queue_dequeue(g_analyzer_printer_queue, &to_print) != 0) {
+        if (queue_dequeue(g_analyzer_printer_queue, &to_print) != 0)
+        {
             logger_write("Printer error while removing data from the buffer", LOG_ERROR);
             return NULL;
         }
         logger_write("PRINTER - new data to print received", LOG_INFO);
 
         // Print
-        //system("tput cup 1 0");  // - Better than clear but its buggy when terminal window is too small
+        //system("tput cup 1 0");  // - Better than clear, but it's buggy when terminal window is too small
         system("clear");
         printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");
         printf("TOTAL:\t ╠");
         size_t pr = (size_t) to_print[0];
-        for (i = 0; i < pr; i++) {
+        for (i = 0; i < pr; i++)
             printf("▒");
-        }
-        for (i = 0; i < 100 - pr; i++) {
+
+        for (i = 0; i < 100 - pr; i++)
             printf("-");
-        }
+
         printf("╣ %.1f%% \n", to_print[0]);
 
-        for (size_t j = 1; j < g_no_cpus + 1; j++) {
+        for (size_t j = 1; j < g_no_cpus + 1; j++)
+        {
             printf("\033[0;%zumcpu%zu:\t ╠", 31 + ((j - 1) % 6), j);
             pr = (size_t) to_print[j];
-            for (i = 0; i < pr; i++) {
+            for (i = 0; i < pr; i++)
                 printf("▒");
-            }
-            for (i = 0; i < 100 - pr; i++) {
+
+            for (i = 0; i < 100 - pr; i++)
                 printf("-");
-            }
+
             printf("╣ %.1f%% \n", to_print[j]);
         }
         printf("\033[0m");
@@ -187,7 +191,8 @@ static void* printer_func(void* args) {
 /**
  * Frees every element that is currently in the queue and destroys queues.
  */
-static void queues_cleanup(void){
+static void queues_cleanup(void)
+{
     CPURawStats to_free_1;
     while(!queue_is_empty(g_reader_analyzer_queue))
     {
@@ -204,7 +209,8 @@ static void queues_cleanup(void){
     queue_delete(g_analyzer_printer_queue);
 }
 
-static void thread_join_create_error(const char* msg){
+static void thread_join_create_error(const char* msg)
+{
     logger_write(msg, LOG_ERROR);
     queues_cleanup();
     destroy_logger();
@@ -221,7 +227,8 @@ int main(void)
 {
     signal(SIGTERM, signal_handler);
     // Create logger
-    if(logger_init() == -1){
+    if(logger_init() == -1)
+    {
         perror("Logger init error");
         return -1;
     }
@@ -251,35 +258,41 @@ int main(void)
     }
 
     // Create Reader thread
-    if(pthread_create(&g_reader_th, NULL, reader_func, NULL) != 0) {
+    if(pthread_create(&g_reader_th, NULL, reader_func, NULL) != 0)
+    {
         thread_join_create_error("Failed to create reader thread");
         return -1;
     }
     logger_write("MAIN - Reader thread created", LOG_STARTUP);
     // Create Analyzer thread
-    if(pthread_create(&g_analyzer_th, NULL, analyzer_func, NULL) != 0) {
+    if(pthread_create(&g_analyzer_th, NULL, analyzer_func, NULL) != 0)
+    {
         thread_join_create_error("Failed to create analyzer thread");
         return -1;
     }
     logger_write("MAIN - Analyzer thread created", LOG_STARTUP);
     // Create Printer thread
-    if(pthread_create(&g_printer_th, NULL, printer_func, NULL) != 0) {
+    if(pthread_create(&g_printer_th, NULL, printer_func, NULL) != 0)
+    {
         thread_join_create_error("Failed to create analyzer thread");
         return -1;
     }
     logger_write("MAIN - Printer thread created", LOG_STARTUP);
 
-    if(pthread_join(g_reader_th, NULL) != 0) {
+    if(pthread_join(g_reader_th, NULL) != 0)
+    {
         thread_join_create_error("Failed to join printer thread");
         return -1;
     }
     logger_write("Reader thread finished", LOG_WARNING);
-    if(pthread_join(g_analyzer_th, NULL) != 0) {
+    if(pthread_join(g_analyzer_th, NULL) != 0)
+    {
         thread_join_create_error("Failed to join analyzer thread");
         return -1;
     }
     logger_write("Analyzer thread finished", LOG_WARNING);
-    if(pthread_join(g_printer_th, NULL) != 0) {
+    if(pthread_join(g_printer_th, NULL) != 0)
+    {
         thread_join_create_error("Failed to join reader thread");
         return -1;
     }

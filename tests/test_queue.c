@@ -44,7 +44,8 @@ static void test_queue_delete(void)
     queue_delete(NULL);
 }
 
-static void test_queue_full_empty_corrupted(void){
+static void test_queue_full_empty_corrupted(void)
+{
     Queue* q = queue_create_new(1, 1);
     assert(q != NULL);
 
@@ -59,7 +60,8 @@ static void test_queue_full_empty_corrupted(void){
     queue_delete(q);
 }
 
-static void test_queue_enqueue(void){
+static void test_queue_enqueue(void)
+{
     size_t value_to_insert = 45;
     register const size_t no_elems = 10;
     register const size_t elem_size = sizeof(int);
@@ -84,7 +86,8 @@ static void test_queue_enqueue(void){
     queue_delete(q);
 }
 
-static void test_queue_dequeue(void){
+static void test_queue_dequeue(void)
+{
     size_t value_to_insert = 45;
     register const size_t no_elems = 10;
     register const size_t elem_size = sizeof(size_t);
@@ -115,7 +118,8 @@ static void test_queue_dequeue(void){
     queue_delete(q);
 }
 
-static void test_queue_multiple_enqueue_dequeue(void){
+static void test_queue_multiple_enqueue_dequeue(void)
+{
     size_t* values_to_insert = malloc(sizeof(size_t)*4);
     values_to_insert[0] = 45;
     values_to_insert[1] = 2;
@@ -160,7 +164,8 @@ static void test_queue_multiple_enqueue_dequeue(void){
     free(values_to_insert);
 }
 
-static void test_queue_with_cpurawstats(void){
+static void test_queue_with_cpurawstats(void)
+{
     size_t cpus = reader_get_no_cpus();
     CPURawStats stats = reader_load_data(cpus);
     Queue* q = queue_create_new(2, sizeof(stats));

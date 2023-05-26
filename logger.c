@@ -27,7 +27,8 @@ static Queue* g_buffer;
  * Creates new for the new log file with a timestamp.
  * @param fileName - pointer where to save new log file name
  */
-static void createLogFileName(char* fileName) {
+static void createLogFileName(char* fileName)
+{
     time_t rawTime;
     struct tm* timeInfo;
 
@@ -98,12 +99,14 @@ static void* logger_func(void* args)
  */
 int logger_init(void)
 {
-    if(g_logger_initialized == 0){
+    if(g_logger_initialized == 0)
+    {
         g_logger_initialized = 1;
         g_buffer = queue_create_new(LOGGER_BUFFER_CAPACITY, sizeof(log_line_t));
         logger_instance = malloc(sizeof(logger_t));
         logger_instance->term_flag = 0;
-        if (pthread_create(&logger_instance->log_thread, NULL, logger_func, NULL) != 0){
+        if (pthread_create(&logger_instance->log_thread, NULL, logger_func, NULL) != 0)
+        {
             perror("Logger thread init error");
             free(logger_instance);
             g_logger_initialized = 0;
@@ -117,8 +120,10 @@ int logger_init(void)
 /**
  * Stops current logger thread.
  */
-void destroy_logger(void){
-    if(logger_instance != NULL){
+void destroy_logger(void)
+{
+    if(logger_instance != NULL)
+    {
         logger_instance->term_flag = 1;
         pthread_join(logger_instance->log_thread, NULL);
         free(logger_instance);
@@ -131,7 +136,8 @@ void destroy_logger(void){
  * @param msg - log message
  * @param log_level - importance of log
  */
-void logger_write(const char* msg, log_level_t log_level){
+void logger_write(const char* msg, log_level_t log_level)
+{
     if(logger_instance == NULL)
         return;
     if(g_buffer == NULL)
