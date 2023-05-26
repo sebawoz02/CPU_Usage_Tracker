@@ -1,4 +1,4 @@
-#CUT - CPU Usage Tracker
+# CUT - CPU Usage Tracker
 
 Multithreaded program written in c99 standard for any Linux distribution.
 The producer-consumer problem between threads is presented.
