@@ -5,9 +5,22 @@
 
 #include "queue.h"
 
+typedef struct log_line log_line_t;
+
 typedef struct Logger logger_t;
 
-pthread_t* logger_init(Queue* queue, sig_atomic_t* term_flag);
+typedef enum
+{
+    LOG_DEBUG   = 0,
+    LOG_INFO    = 1,
+    LOG_WARNING = 2,
+    LOG_ERROR   = 3,
+    LOG_FATAL   = 4,
+} log_level_t;
+
+void logger_init(void);
+
+void logger_write(const char* msg, log_level_t log_level);
 
 void destroy_logger(void);
 
