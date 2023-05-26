@@ -1,6 +1,7 @@
 /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/reader.dir
 /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/analyzer.dir
 /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/queue.dir
+/home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/logger.dir
 /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/CUT.dir
 /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/test.dir
 /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles/edit_cache.dir

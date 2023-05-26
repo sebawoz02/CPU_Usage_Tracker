@@ -11,14 +11,12 @@ typedef struct Logger logger_t;
 
 typedef enum
 {
-    LOG_DEBUG   = 0,
-    LOG_INFO    = 1,
-    LOG_WARNING = 2,
-    LOG_ERROR   = 3,
-    LOG_FATAL   = 4,
+    LOG_INFO    = 0,
+    LOG_WARNING = 1,
+    LOG_ERROR   = 2
 } log_level_t;
 
-void logger_init(void);
+int logger_init(void);
 
 void logger_write(const char* msg, log_level_t log_level);
 

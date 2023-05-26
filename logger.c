@@ -4,7 +4,7 @@
 
 #include "logger.h"
 
-#define LOGGER_MSG_MAX_SIZE 256
+#define LOGGER_MSG_MAX_SIZE 255 //256-th is null terminator
 #define LOGGER_BUFFER_CAPACITY 128
 
 struct log_line{
@@ -22,19 +22,70 @@ struct Logger{
 static logger_t* logger_instance = NULL;
 static Queue* g_buffer;
 
+
+/**
+ * Creates new for the new log file with a timestamp.
+ * @param fileName - pointer where to save new log file name
+ */
+static void createLogFileName(char* fileName) {
+    time_t rawTime;
+    struct tm* timeInfo;
+
+    time(&rawTime);
+    timeInfo = localtime(&rawTime);
+
+    strftime(fileName, 256, "../logs/log_%Y%m%d_%H%M%S.txt", timeInfo);
+}
+
+// Logger thread func - appends logs to the file
 static void* logger_func(void* args)
 {
-    while(!logger_instance->terminate || !queue_is_empty(g_buffer))
+    char filename[256];
+
+    createLogFileName(filename);
+    FILE* log_file = fopen(filename, "a+");
+    if(log_file == NULL)
     {
+        perror("Logger failed to create new file.");
         return NULL;
     }
+    log_line_t* new_log = malloc(sizeof(log_line_t));
+    pthread_mutex_t* mut = queue_get_mutex(g_buffer);
+
+    while(logger_instance->terminate == 0 || !queue_is_empty(g_buffer))
+    {
+        pthread_mutex_lock(mut);
+        while (queue_is_empty(g_buffer))
+            pthread_cond_wait(&logger_instance->more, mut);
+        queue_dequeue(g_buffer, new_log);
+        pthread_cond_signal(&logger_instance->less);
+        pthread_mutex_unlock(mut);
+
+        char prefix[10];
+        switch (new_log->log_level) {
+            case LOG_INFO:
+                strcpy(prefix, "[INFO]");
+                break;
+            case LOG_WARNING:
+                strcpy(prefix, "[WARNING]");
+                break;
+            case LOG_ERROR:
+                strcpy(prefix, "[ERROR]");
+                break;
+        }
+        fprintf(log_file, "%s ", prefix);
+        fprintf(log_file, "%s\n", new_log->message);
+    }
+    fclose(log_file);
+    free(new_log);
     return NULL;
 }
 
 /**
  * Creates logger_cv instance. If one instance already exists no action performed.
+ * @return return 0 on success, else -1
  */
-void logger_init(void)
+int logger_init(void)
 {
     if(logger_instance == NULL){
         g_buffer = queue_create_new(LOGGER_BUFFER_CAPACITY, sizeof(log_line_t));
@@ -43,19 +94,21 @@ void logger_init(void)
         if(pthread_cond_init(&logger_instance->less, NULL)!=0){
             perror("Logger cv init error");
             free(logger_instance);
-            return;
+            return -1;
         }
         if(pthread_cond_init(&logger_instance->more, NULL)!=0){
             perror("Logger cv init error");
             free(logger_instance);
-            return;
+            return -1;
         }
         if (pthread_create(&logger_instance->log_thread, NULL, logger_func, NULL) != 0){
             perror("Logger thread init error");
             free(logger_instance);
-            return;
+            return -1;
         }
+        return 0;
     }
+    return -1;
 }
 
 /**
@@ -66,6 +119,7 @@ void destroy_logger(void){
         logger_instance->terminate = true;
         pthread_join(logger_instance->log_thread, NULL);
         free(logger_instance);
+        queue_delete(g_buffer);
     }
 }
 

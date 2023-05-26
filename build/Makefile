@@ -156,6 +156,19 @@ queue/fast:
 .PHONY : queue/fast
 
 #=============================================================================
+# Target rules for targets named logger
+
+# Build rule for target.
+logger: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 logger
+.PHONY : logger
+
+# fast build rule for target.
+logger/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/logger.dir/build.make CMakeFiles/logger.dir/build
+.PHONY : logger/fast
+
+#=============================================================================
 # Target rules for targets named CUT
 
 # Build rule for target.
@@ -204,6 +217,30 @@ analyzer.s: analyzer.c.s
 analyzer.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/analyzer.dir/build.make CMakeFiles/analyzer.dir/analyzer.c.s
 .PHONY : analyzer.c.s
+
+logger.o: logger.c.o
+.PHONY : logger.o
+
+# target to build an object file
+logger.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/logger.dir/build.make CMakeFiles/logger.dir/logger.c.o
+.PHONY : logger.c.o
+
+logger.i: logger.c.i
+.PHONY : logger.i
+
+# target to preprocess a source file
+logger.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/logger.dir/build.make CMakeFiles/logger.dir/logger.c.i
+.PHONY : logger.c.i
+
+logger.s: logger.c.s
+.PHONY : logger.s
+
+# target to generate assembly for a file
+logger.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/logger.dir/build.make CMakeFiles/logger.dir/logger.c.s
+.PHONY : logger.c.s
 
 main.o: main.c.o
 .PHONY : main.o
@@ -359,12 +396,16 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... CUT"
 	@echo "... analyzer"
+	@echo "... logger"
 	@echo "... queue"
 	@echo "... reader"
 	@echo "... test"
 	@echo "... analyzer.o"
 	@echo "... analyzer.i"
 	@echo "... analyzer.s"
+	@echo "... logger.o"
+	@echo "... logger.i"
+	@echo "... logger.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
