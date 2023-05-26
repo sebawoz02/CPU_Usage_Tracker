@@ -8,18 +8,25 @@
 #define QUEUE_MAGIC_NUMBER (int64_t) 0xdeadbeef
 
 
+/**
+ *  QUEUE STRUCTURE IS DESIGNED TO BE USED IN PRODUCER-CONSUMER PROBLEM.
+ *  ALL OPERATIONS ON BUFFER ARE THREAD SAFE,  PROTECTED BY MUTEX AND CONDITION VARIABLES
+ *  QUEUE CAN STORE ALL DATA TYPES.
+ */
 struct Queue {
-    uint64_t magic;
-    pthread_mutex_t mutex;  // mutex used to protect dequeue and enqueue is created with the structure
+    pthread_cond_t less_cv;     // 48B - signals if there is fewer data in queue now
+    pthread_cond_t more_cv;     //48B - signals if there is more data in queue now
+    pthread_mutex_t mutex;  // 40B - mutex used to protect dequeue and enqueue is created with the structure
+    uint64_t magic;     // 8B
 
-    size_t tail;
-    size_t head;
+    size_t tail;    // 8B
+    size_t head;     // 8B
 
-    size_t cur_no_elements;
-    size_t capacity;
+    size_t cur_no_elements; // 8B
+    size_t capacity;    // 8B
 
-    size_t elem_size;
-    uint8_t buffer[];
+    size_t elem_size;   // 8B
+    uint8_t buffer[];   // Fixed size - FAM
 };
 
 /**
@@ -50,6 +57,21 @@ Queue* queue_create_new(const size_t capacity, const size_t data_size)
         free(q);
         return NULL;
     }
+    if(pthread_cond_init(&q->less_cv, NULL)!=0)
+    {
+        perror("Queue cond variable init error\n");
+        pthread_mutex_destroy(&q->mutex);
+        free(q);
+        return NULL;
+    }
+    if(pthread_cond_init(&q->more_cv, NULL)!=0)
+    {
+        perror("Queue cond variable init error\n");
+        pthread_mutex_destroy(&q->mutex);
+        pthread_cond_destroy(&q->less_cv);
+        free(q);
+        return NULL;
+    }
 
     q->tail = 0;
     q->head = 0;
@@ -70,6 +92,8 @@ void queue_delete(Queue* q)
     if(q==NULL)
         return;
     pthread_mutex_destroy(&q->mutex);
+    pthread_cond_destroy(&q->less_cv);
+    pthread_cond_destroy(&q->more_cv);
     free(q);
 }
 
@@ -118,7 +142,8 @@ bool queue_is_corrupted(const Queue* q){
 
 
 /**
- * Adds new element to the queue.
+ * Adds new element to the queue. When queue is full condition variable is used to wait for another thread to remove data.
+ * data from queue.
  * @param q - queue
  * @param elem - element to add
  * @return 0 if added successfully else -1.
@@ -129,8 +154,10 @@ int queue_enqueue(Queue* restrict const q, void* restrict const elem){
         return -1;
     if(elem == NULL)
         return -1;
-    if(queue_is_full(q))
-        return -1;
+
+    pthread_mutex_lock(&q->mutex);
+    while(queue_is_full(q))
+        pthread_cond_wait(&q->less_cv, &q->mutex);
 
     uint8_t* const ptr = &q->buffer[q->head*q->elem_size];
     memcpy(ptr, elem, q->elem_size);
@@ -138,11 +165,13 @@ int queue_enqueue(Queue* restrict const q, void* restrict const elem){
     q->cur_no_elements++;
     q->head = (q->head + 1) % q->capacity;
 
+    pthread_cond_signal(&q->more_cv);
+    pthread_mutex_unlock(&q->mutex);
     return 0;
 }
 
 /**
- * Removes element from the queue.
+ * Removes element from the queue. When queue is empty condition variable is used to wait for another thread to insert data.
  * @param q - queue
  * @param elem - element to delete
  * @return 0 if removed successfully else -1.
@@ -154,8 +183,10 @@ int queue_dequeue(Queue* restrict const q, void* restrict elem){
         return -1;
     if(queue_is_corrupted(q))
         return -1;
-    if(queue_is_empty(q))
-        return -1;
+
+    pthread_mutex_lock(&q->mutex);
+    while (queue_is_empty(q))
+        pthread_cond_wait(&q->more_cv, &q->mutex);
 
     uint8_t * const ptr = &q->buffer[q->tail * q->elem_size];
     memcpy(elem, ptr, q->elem_size);
@@ -163,14 +194,8 @@ int queue_dequeue(Queue* restrict const q, void* restrict elem){
     q->cur_no_elements--;
     q->tail = (q->tail + 1) % q->capacity;
 
+    pthread_cond_signal(&q->less_cv);
+    pthread_mutex_unlock(&q->mutex);
+
     return 0;
 }
-
-/**
- * Mutex is the only struct element which can be edited
- * @param q - queue which mutex will be returned
- */
-pthread_mutex_t* queue_get_mutex(Queue* q){
-    return &q->mutex;
-}
-

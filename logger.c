@@ -17,7 +17,7 @@ struct Logger{
     pthread_cond_t less;
     pthread_cond_t more;
     pthread_t log_thread;
-    sig_atomic_t terminate;
+    sig_atomic_t term_flag;
 };
 
 static logger_t* logger_instance = NULL;
@@ -52,16 +52,10 @@ static void* logger_func(void* args)
         return NULL;
     }
     log_line_t* new_log = malloc(sizeof(log_line_t));
-    pthread_mutex_t* mut = queue_get_mutex(g_buffer);
 
-    while(logger_instance->terminate == 0 || !queue_is_empty(g_buffer))
+    while(logger_instance->term_flag == 0 || !queue_is_empty(g_buffer))
     {
-        pthread_mutex_lock(mut);
-        while (queue_is_empty(g_buffer))
-            pthread_cond_wait(&logger_instance->more, mut);
         queue_dequeue(g_buffer, new_log);
-        pthread_cond_signal(&logger_instance->less);
-        pthread_mutex_unlock(mut);
 
         char prefix[32];
         switch (new_log->log_level) {
@@ -110,7 +104,7 @@ int logger_init(void)
         g_logger_initialized = 1;
         g_buffer = queue_create_new(LOGGER_BUFFER_CAPACITY, sizeof(log_line_t));
         logger_instance = malloc(sizeof(logger_t));
-        logger_instance->terminate = 0;
+        logger_instance->term_flag = 0;
         if(pthread_cond_init(&logger_instance->less, NULL)!=0){
             perror("Logger cv init error");
             goto exit_error;
@@ -138,7 +132,7 @@ int logger_init(void)
  */
 void destroy_logger(void){
     if(logger_instance != NULL){
-        logger_instance->terminate = 1;
+        logger_instance->term_flag = 1;
         pthread_join(logger_instance->log_thread, NULL);
         free(logger_instance);
         queue_delete(g_buffer);
@@ -163,14 +157,8 @@ void logger_write(const char* msg, log_level_t log_level){
     } else{
         strcpy(new_log.message, msg);
     }
-    new_log.log_level = log_level;
 
-    pthread_mutex_t* mut = queue_get_mutex(g_buffer);
-    pthread_mutex_lock(mut);
-    while(queue_is_full(g_buffer))
-        pthread_cond_wait(&logger_instance->less, mut);
+    new_log.log_level = log_level;
     queue_enqueue(g_buffer, &new_log);
-    pthread_cond_signal(&logger_instance->more);
-    pthread_mutex_unlock(mut);
 }
 

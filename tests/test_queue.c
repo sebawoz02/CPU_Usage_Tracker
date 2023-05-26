@@ -11,10 +11,9 @@
  * - Delete queue
  * - Full/empty on the empty queue
  * - Enqueue
- * - Enqueue to the full queue
  * - Dequeue
- * - Dequeue from the empty queue
  * - Multiple enqueue and dequeue
+ * - Behaviour when enqueueing and dequeue structure used in program
  */
 static void test_queue_create(void);
 static void test_queue_delete(void);
@@ -92,10 +91,9 @@ static void test_queue_dequeue(void){
     size_t val = 0;
 
     Queue* const q = queue_create_new(no_elems, elem_size);
+
     assert(q != NULL);
     assert(!queue_is_corrupted(q));
-
-    assert(queue_dequeue(q, &val) != 0);
     assert(queue_is_empty(q));
     assert(!queue_is_full(q));
 

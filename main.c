@@ -13,21 +13,14 @@ static volatile sig_atomic_t g_termination_req = 0;
 
 // Reader - Analyzer : Producer - Consumer problem
 static Queue* g_reader_analyzer_queue;
-static pthread_cond_t g_ra_more_cv; // signals that there is more data in queue now
-static pthread_cond_t g_ra_less_cv; // signals that there is fewer data in queue now
 static pthread_t g_reader_th;
 static pthread_t g_analyzer_th;
 
-
 // Analyzer - Printer : Producer - Consumer problem
 static Queue* g_analyzer_printer_queue;
-static pthread_cond_t g_ap_more_cv;
-static pthread_cond_t g_ap_less_cv;
 static pthread_t g_printer_th;
 
-
-static size_t g_no_cpus;
-
+static size_t g_no_cpus;    // number of cpus
 
 /**
  * Reader thread function
@@ -44,25 +37,16 @@ static void* reader_func(void* args)
         // Produce
         CPURawStats data = reader_load_data(g_no_cpus);
         // Add to the buffer
-        pthread_mutex_t* mut = queue_get_mutex(g_reader_analyzer_queue);
-        pthread_mutex_lock(mut);
-        while (queue_is_full(g_reader_analyzer_queue))
-            pthread_cond_wait(&g_ra_less_cv, mut);  // wait for more space if needed
-
-        assert(!queue_is_full(g_reader_analyzer_queue));
-
         if(queue_enqueue(g_reader_analyzer_queue, &data) != 0)
         {
             logger_write("Reader error while adding data to the buffer", LOG_ERROR);
             return NULL;
         }
-
-        pthread_cond_signal(&g_ra_more_cv);
-        pthread_mutex_unlock(mut);
         logger_write("READER - new data to analyze sent", LOG_INFO);
 
         if(g_termination_req == 1)
             break;
+
         logger_write("READER - goes to sleep", LOG_INFO);
         sleep(1);   // Wait one second
     }
@@ -99,12 +83,6 @@ static void* analyzer_func(void* args)
     while(g_termination_req == 0)
     {
         // Pop from buffer
-        pthread_mutex_t* mut = queue_get_mutex(g_reader_analyzer_queue);
-        pthread_mutex_lock(mut);
-        while (queue_is_empty(g_reader_analyzer_queue))
-            pthread_cond_wait(&g_ra_more_cv, mut);
-
-        assert(!queue_is_empty(g_reader_analyzer_queue));
         // Queue structure is thread safe
         if (queue_dequeue(g_reader_analyzer_queue, data) != 0)
         {
@@ -113,10 +91,7 @@ static void* analyzer_func(void* args)
             free(prev_idle);
             return NULL;
         }
-
-        pthread_cond_signal(&g_ra_less_cv);
-        pthread_mutex_unlock(mut);
-        logger_write("ANALYZER - new data to anlyze received", LOG_INFO);
+        logger_write("ANALYZER - new data to analyze received", LOG_INFO);
 
         // Consume / Analyze
         if (first_iter)
@@ -135,12 +110,6 @@ static void* analyzer_func(void* args)
                 to_print[j+1] =  analyzer_analyze(&prev_total[j+1], &prev_idle[j+1], data->cpus[j]);
 
             // Send to print
-            mut = queue_get_mutex(g_analyzer_printer_queue);
-            pthread_mutex_lock(mut);
-            while (queue_is_full(g_analyzer_printer_queue)) // wait for more space
-                pthread_cond_wait(&g_ap_less_cv, mut);
-
-            assert(!queue_is_full(g_analyzer_printer_queue));
             if(queue_enqueue(g_analyzer_printer_queue, &to_print) != 0)
             {
                 logger_write("Analyzer error while adding data to the buffer", LOG_ERROR);
@@ -148,8 +117,6 @@ static void* analyzer_func(void* args)
                 free(prev_idle);
                 return NULL;
             }
-            pthread_cond_signal(&g_ap_more_cv);
-            pthread_mutex_unlock(mut);
             logger_write("ANALYZER - new data to print sent", LOG_INFO);
         }
         free(data->cpus);
@@ -179,16 +146,10 @@ static void* printer_func(void* args) {
     while(g_termination_req == 0){
         size_t i;
         // Remove from buffer
-        pthread_mutex_t* mut = queue_get_mutex(g_analyzer_printer_queue);
-        pthread_mutex_lock(mut);
-        while (queue_is_empty(g_analyzer_printer_queue))
-            pthread_cond_wait(&g_ap_more_cv, mut);
         if (queue_dequeue(g_analyzer_printer_queue, &to_print) != 0) {
             logger_write("Printer error while removing data from the buffer", LOG_ERROR);
             return NULL;
         }
-        pthread_cond_signal(&g_ap_less_cv);
-        pthread_mutex_unlock(mut);
         logger_write("PRINTER - new data to print received", LOG_INFO);
 
         // Print
@@ -223,15 +184,6 @@ static void* printer_func(void* args) {
     return NULL;
 }
 
-/**
- * Destroys all created condition variables.
- */
-static void destroy_cv(void){
-    pthread_cond_destroy(&g_ra_less_cv);
-    pthread_cond_destroy(&g_ra_more_cv);
-    pthread_cond_destroy(&g_ap_less_cv);
-    pthread_cond_destroy(&g_ap_more_cv);
-}
 
 /**
  * Frees every element that is currently in the queue and destroys queues.
@@ -256,10 +208,10 @@ static void queues_cleanup(void){
 static void thread_join_create_error(const char* msg){
     logger_write(msg, LOG_ERROR);
     queues_cleanup();
-    destroy_cv();
     destroy_logger();
 }
 
+// SIGTERM sets termination flag which tells all the threads to clean data and exit
 static void signal_handler(int signum)
 {
     g_termination_req = 1;
@@ -274,43 +226,12 @@ int main(void)
         perror("Logger init error");
         return -1;
     }
-    // Reader - Analyzer semaphores
-    if(pthread_cond_init(&g_ra_more_cv, NULL) != 0)
-    {
-        logger_write("Reader - Analyzer cv init error", LOG_ERROR);
-        destroy_logger();
-        return -1;
-    }
-    if(pthread_cond_init(&g_ra_less_cv, NULL) != 0)
-    {
-        logger_write("Reader - Analyzer cv init error", LOG_ERROR);
-        pthread_cond_destroy(&g_ra_more_cv);
-        destroy_logger();
-        return -1;
-    }
-
-    // Analyzer - Printer semaphores
-    if(pthread_cond_init(&g_ap_more_cv, NULL) != 0)
-    {
-        logger_write("Analyzer - Printer cv init error", LOG_ERROR);
-        destroy_cv();
-        destroy_logger();
-        return -1;
-    }
-    if(pthread_cond_init(&g_ap_less_cv, NULL) != 0)
-    {
-        logger_write("Analyzer - Printer cv init error", LOG_ERROR);
-        destroy_cv();
-        destroy_logger();
-        return -1;
-    }
 
     // Assign global variables
     g_no_cpus = reader_get_no_cpus();
     if(g_no_cpus == 0)
     {
         logger_write("Error while getting information about no cores", LOG_ERROR);
-        destroy_cv();
         destroy_logger();
         return -1;
     }
@@ -318,7 +239,6 @@ int main(void)
     if(g_reader_analyzer_queue == NULL)
     {
         logger_write("Create new queue error", LOG_ERROR);
-        destroy_cv();
         destroy_logger();
         return -1;
     }
@@ -326,12 +246,10 @@ int main(void)
     if(g_analyzer_printer_queue == NULL)
     {
         queue_delete(g_reader_analyzer_queue);
-        destroy_cv();
         logger_write("Create new queue error", LOG_ERROR);
         destroy_logger();
         return -1;
     }
-
 
     // Create Reader thread
     if(pthread_create(&g_reader_th, NULL, reader_func, NULL) != 0) {
@@ -370,9 +288,8 @@ int main(void)
 
     printf("exit\n");
 
-    //Close logger and cleanup data
+    // Cleanup data and destroy logger
     queues_cleanup();
-    destroy_cv();
     logger_write("Closing program", LOG_INFO);
     destroy_logger();
 
