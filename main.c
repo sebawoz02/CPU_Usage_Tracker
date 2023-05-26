@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <assert.h>
 
 #include "queue.h"
-#include "CPURawStats.h"
 #include "reader.h"
 #include "analyzer.h"
+#include "logger.h"
 
 // Signal handling
 static volatile sig_atomic_t g_termination_req = 0;
@@ -25,6 +24,7 @@ static Queue* g_analyzer_printer_queue;
 static pthread_cond_t g_ap_more_cv;
 static pthread_cond_t g_ap_less_cv;
 static pthread_t g_printer_th;
+
 
 static size_t g_no_cpus;
 
