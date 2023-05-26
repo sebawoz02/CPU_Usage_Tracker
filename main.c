@@ -3,11 +3,15 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include "queue.h"
 #include "CPURawStats.h"
 #include "reader.h"
 #include "analyzer.h"
+
+// Signal handling
+static volatile sig_atomic_t g_termination_req = 0;
 
 // Reader - Analyzer : Producer - Consumer problem
 static Queue* g_reader_analyzer_queue;
@@ -24,11 +28,17 @@ static pthread_t g_printer_th;
 
 static size_t g_no_cpus;
 
+
 /**
  * Reader thread function
  */
 static void* reader_func(void* args)
 {
+    sigset_t threadMask;
+    sigemptyset(&threadMask);
+    sigaddset(&threadMask, SIGTERM);
+    pthread_sigmask(SIG_BLOCK, &threadMask, NULL);
+
     while(1)
     {
         // Produce
@@ -39,11 +49,15 @@ static void* reader_func(void* args)
         if(queue_enqueue(g_reader_analyzer_queue, &data) != 0)
         {
             perror("Reader error while adding data to the buffer");
-            pthread_exit(NULL);
+            return NULL;
         }
         sem_post(&g_ra_sem_full);
+        if(g_termination_req == 1)
+            break;
+
         sleep(1);   // Wait one second
     }
+    return 0;
 }
 
 /**
@@ -53,7 +67,7 @@ static void* reader_func(void* args)
  */
 static void* analyzer_func(void* args)
 {
-    CPURawStats data;
+    CPURawStats* data = malloc(sizeof(Stats)*(g_no_cpus+1));
 
     bool first_iter = true;
 
@@ -66,37 +80,42 @@ static void* analyzer_func(void* args)
         // One of the pointers is possibly not NULL, free(ptr) - If ptr is NULL, no operation is performed.
         free(prev_idle);
         free(prev_total);
-        pthread_exit(NULL);
+        return NULL;
     }
+    sigset_t threadMask;
+    sigemptyset(&threadMask);
+    sigaddset(&threadMask, SIGTERM);
+    pthread_sigmask(SIG_BLOCK, &threadMask, NULL);
+
     while(1)
     {
         // Pop from buffer
         sem_wait(&g_ra_sem_full);
         // Queue structure is thread safe
-        if (queue_dequeue(g_reader_analyzer_queue, &data) != 0)
+        if (queue_dequeue(g_reader_analyzer_queue, data) != 0)
         {
             perror("Analyzer error while removing data from the buffer");
             free(prev_total);
             free(prev_idle);
-            pthread_exit(NULL);
+            return NULL;
         }
         sem_post(&g_ra_sem_empty);
 
         // Consume / Analyze
         if (first_iter)
         {
-            analyzer_update_prev(prev_total, prev_idle, data, g_no_cpus);
+            analyzer_update_prev(prev_total, prev_idle, *data, g_no_cpus);
             first_iter = false;
         }
         else
         {
             double* to_print = malloc(sizeof(double)*(g_no_cpus+1));
             //Total
-            to_print[0] =  analyzer_analyze(&prev_total[0], &prev_idle[0], data.total);
+            to_print[0] =  analyzer_analyze(&prev_total[0], &prev_idle[0], data->total);
 
             // Cores
             for (size_t j = 0; j < g_no_cpus; ++j)
-                to_print[j+1] =  analyzer_analyze(&prev_total[j+1], &prev_idle[j+1], data.cpus[j]);
+                to_print[j+1] =  analyzer_analyze(&prev_total[j+1], &prev_idle[j+1], data->cpus[j]);
 
             // Send to print
             sem_wait(&g_ap_sem_empty);
@@ -105,12 +124,22 @@ static void* analyzer_func(void* args)
                 perror("Analyzer error while adding data to the buffer");
                 free(prev_total);
                 free(prev_idle);
-                pthread_exit(NULL);
+                return NULL;
             }
             sem_post(&g_ap_sem_full);
         }
-        free(data.cpus);
+
+        free(data->cpus);
+        if(g_termination_req == 1)
+            break;
+
     }
+    sleep(1);
+    // Cleanup
+    free(data);
+    free(prev_total);
+    free(prev_idle);
+    return 0;
 }
 
 /**
@@ -118,9 +147,15 @@ static void* analyzer_func(void* args)
  * Responsible for displaying prepared data in the terminal.
  */
 static void* printer_func(void* args) {
+    // Only main thread needs to set the flag
+    sigset_t threadMask;
+    sigemptyset(&threadMask);
+    sigaddset(&threadMask, SIGTERM);
+    pthread_sigmask(SIG_BLOCK, &threadMask, NULL);
+
     system("clear");
 
-    // printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");
+    printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");
     double *to_print;
     while(1){
         size_t i;
@@ -128,15 +163,14 @@ static void* printer_func(void* args) {
         sem_wait(&g_ap_sem_full);
         if (queue_dequeue(g_analyzer_printer_queue, &to_print) != 0) {
             perror("Printer error while removing data from the buffer");
-            pthread_exit(NULL);
+            return NULL;
         }
         sem_post(&g_ap_sem_empty);
 
         // Print
-        // system("tput cup 1 0");  - Better than clear but its buggy when terminal is too small
-        system("clear");
-
-        printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");
+        system("tput cup 1 0");  // - Better than clear but its buggy when terminal window is too small
+        //system("clear");
+        //printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");
         printf("TOTAL:\t ╠");
         size_t pr = (size_t) to_print[0];
         for (i = 0; i < pr; i++) {
@@ -161,7 +195,10 @@ static void* printer_func(void* args) {
         printf("\033[0m");
 
         free(to_print);
+        if(g_termination_req == 1)
+            break;
     }
+    return 0;
 }
 
 /**
@@ -175,7 +212,7 @@ static void destroy_semaphores(void){
 }
 
 /**
- * Frees every element that is currently in the queue and destoroys queues.
+ * Frees every element that is currently in the queue and destroys queues.
  */
 static void queues_cleanup(void){
     CPURawStats to_free_1;
@@ -190,6 +227,8 @@ static void queues_cleanup(void){
         queue_dequeue(g_analyzer_printer_queue,&to_free_2);
         free(to_free_2);
     }
+    queue_delete(g_reader_analyzer_queue);
+    queue_delete(g_analyzer_printer_queue);
 }
 
 static void thread_join_create_error(const char* msg){
@@ -198,10 +237,16 @@ static void thread_join_create_error(const char* msg){
     destroy_semaphores();
 }
 
+static void signal_handler(int signum)
+{
+    g_termination_req = 1;
+}
 
 
 int main(void)
 {
+    signal(SIGTERM, signal_handler);
+
     // Reader - Analyzer semaphores
     if(sem_init(&g_ra_sem_empty, 0, 10) != 0)
     {
@@ -234,33 +279,34 @@ int main(void)
     if(g_no_cpus == 0)
     {
         perror("Error while getting information about no cores");
+        destroy_semaphores();
         return -1;
     }
     g_reader_analyzer_queue = queue_create_new(10, sizeof(Stats)*(g_no_cpus+1));
     if(g_reader_analyzer_queue == NULL)
     {
         perror("Create new queue error");
+        destroy_semaphores();
         return -1;
     }
     g_analyzer_printer_queue = queue_create_new(10, sizeof(double)*(g_no_cpus+1));
     if(g_analyzer_printer_queue == NULL)
     {
+        queue_delete(g_reader_analyzer_queue);
+        destroy_semaphores();
         perror("Create new queue error");
         return -1;
     }
-
     // Create Reader thread
     if(pthread_create(&g_reader_th, NULL, reader_func, NULL) != 0) {
         thread_join_create_error("Failed to create reader thread");
         return -1;
     }
-
     // Create Analyzer thread
     if(pthread_create(&g_analyzer_th, NULL, analyzer_func, NULL) != 0) {
         thread_join_create_error("Failed to create analyzer thread");
         return -1;
     }
-
     // Create Printer thread
     if(pthread_create(&g_printer_th, NULL, printer_func, NULL) != 0) {
         thread_join_create_error("Failed to create analyzer thread");
@@ -271,18 +317,15 @@ int main(void)
         thread_join_create_error("Failed to join printer thread");
         return -1;
     }
-
     if(pthread_join(g_analyzer_th, NULL) != 0) {
         thread_join_create_error("Failed to join analyzer thread");
         return -1;
     }
-
     if(pthread_join(g_printer_th, NULL) != 0) {
         thread_join_create_error("Failed to join reader thread");
         return -1;
     }
 
-    system("clean");
     printf("exit\n");
 
     queues_cleanup();
