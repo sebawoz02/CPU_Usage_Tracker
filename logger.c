@@ -13,9 +13,6 @@ struct log_line{
 };
 
 struct Logger{
-    // 7 byte alignment
-    pthread_cond_t less;
-    pthread_cond_t more;
     pthread_t log_thread;
     sig_atomic_t term_flag;
 };
@@ -105,24 +102,13 @@ int logger_init(void)
         g_buffer = queue_create_new(LOGGER_BUFFER_CAPACITY, sizeof(log_line_t));
         logger_instance = malloc(sizeof(logger_t));
         logger_instance->term_flag = 0;
-        if(pthread_cond_init(&logger_instance->less, NULL)!=0){
-            perror("Logger cv init error");
-            goto exit_error;
-        }
-        if(pthread_cond_init(&logger_instance->more, NULL)!=0){
-            perror("Logger cv init error");
-            goto exit_error;
-        }
         if (pthread_create(&logger_instance->log_thread, NULL, logger_func, NULL) != 0){
             perror("Logger thread init error");
-            goto exit_error;
+            free(logger_instance);
+            g_logger_initialized = 0;
+            return -1;
         }
         return 0;
-
-        exit_error:
-        free(logger_instance);
-        g_logger_initialized = 0;
-        return -1;
     }
     return -1;
 }
@@ -161,4 +147,3 @@ void logger_write(const char* msg, log_level_t log_level){
     new_log.log_level = log_level;
     queue_enqueue(g_buffer, &new_log);
 }
-

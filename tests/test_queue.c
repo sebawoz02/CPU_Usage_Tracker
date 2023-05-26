@@ -197,5 +197,3 @@ void test_queue_main(void)
     test_queue_multiple_enqueue_dequeue();
     test_queue_with_cpurawstats();
 }
-
-
