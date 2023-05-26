@@ -1,0 +1,149 @@
+[STARTUP]	[2023-05-26 20:36:53]	MAIN - Reader thread created
+[STARTUP]	[2023-05-26 20:36:53]	MAIN - Analyzer thread created
+[STARTUP]	[2023-05-26 20:36:53]	MAIN - Printer thread created
+[INFO]	[2023-05-26 20:36:53]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:36:53]	READER - goes to sleep
+[INFO]	[2023-05-26 20:36:53]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:36:54]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:36:54]	READER - goes to sleep
+[INFO]	[2023-05-26 20:36:54]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:36:54]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:36:54]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:36:55]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:36:55]	READER - goes to sleep
+[INFO]	[2023-05-26 20:36:55]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:36:55]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:36:55]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:36:56]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:36:56]	READER - goes to sleep
+[INFO]	[2023-05-26 20:36:56]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:36:56]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:36:56]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:36:57]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:36:57]	READER - goes to sleep
+[INFO]	[2023-05-26 20:36:57]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:36:57]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:36:57]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:36:58]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:36:58]	READER - goes to sleep
+[INFO]	[2023-05-26 20:36:58]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:36:58]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:36:58]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:36:59]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:36:59]	READER - goes to sleep
+[INFO]	[2023-05-26 20:36:59]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:36:59]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:36:59]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:00]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:00]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:00]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:00]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:00]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:01]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:01]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:01]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:01]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:01]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:02]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:02]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:02]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:02]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:02]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:03]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:03]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:03]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:03]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:03]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:04]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:04]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:04]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:04]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:04]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:05]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:05]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:05]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:05]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:05]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:06]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:06]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:06]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:06]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:06]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:07]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:07]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:07]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:07]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:07]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:08]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:08]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:08]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:08]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:08]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:09]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:09]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:09]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:09]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:09]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:10]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:10]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:10]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:10]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:10]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:11]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:11]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:11]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:11]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:11]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:12]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:12]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:12]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:12]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:12]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:13]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:13]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:13]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:13]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:13]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:14]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:14]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:14]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:14]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:14]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:15]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:15]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:15]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:15]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:15]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:16]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:16]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:16]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:16]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:16]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:17]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:17]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:17]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:17]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:17]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:18]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:18]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:18]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:18]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:18]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:19]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:19]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:19]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:19]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:19]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:20]	READER - new data to analyze sent
+[INFO]	[2023-05-26 20:37:20]	READER - goes to sleep
+[INFO]	[2023-05-26 20:37:20]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:20]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:20]	PRINTER - new data to print received
+[INFO]	[2023-05-26 20:37:21]	READER - new data to analyze sent
+[WARNING]	[2023-05-26 20:37:21]	Reader thread finished
+[INFO]	[2023-05-26 20:37:21]	ANALYZER - new data to anlyze received
+[INFO]	[2023-05-26 20:37:21]	ANALYZER - new data to print sent
+[INFO]	[2023-05-26 20:37:21]	PRINTER - new data to print received
+[WARNING]	[2023-05-26 20:37:21]	Analyzer thread finished
+[WARNING]	[2023-05-26 20:37:21]	Printer thread finished
+[INFO]	[2023-05-26 20:37:21]	Closing program

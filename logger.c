@@ -13,13 +13,15 @@ struct log_line{
 };
 
 struct Logger{
+    // 7 byte alignment
     pthread_cond_t less;
     pthread_cond_t more;
     pthread_t log_thread;
-    bool terminate;
+    sig_atomic_t terminate;
 };
 
 static logger_t* logger_instance = NULL;
+static sig_atomic_t g_logger_initialized = 0;
 static Queue* g_buffer;
 
 
@@ -61,7 +63,7 @@ static void* logger_func(void* args)
         pthread_cond_signal(&logger_instance->less);
         pthread_mutex_unlock(mut);
 
-        char prefix[10];
+        char prefix[32];
         switch (new_log->log_level) {
             case LOG_INFO:
                 strcpy(prefix, "[INFO]");
@@ -72,8 +74,25 @@ static void* logger_func(void* args)
             case LOG_ERROR:
                 strcpy(prefix, "[ERROR]");
                 break;
+            case LOG_STARTUP:
+                strcpy(prefix, "[STARTUP]");
+                break;
+            case LOG_DEBUG:
+                strcpy(prefix, "[DEBUG]");
+                break;
         }
-        fprintf(log_file, "%s ", prefix);
+        time_t currentTime;
+        struct tm *localTime;
+        char dateTime[20];
+        // Pobranie obecnego czasu
+        currentTime = time(NULL);
+        // Konwersja czasu na lokalny czas
+        localTime = localtime(&currentTime);
+        // Formatowanie daty i godziny
+        strftime(dateTime, sizeof(dateTime), "%Y-%m-%d %H:%M:%S", localTime);
+
+        fprintf(log_file, "%s\t", prefix);
+        fprintf(log_file, "[%s]\t", dateTime);
         fprintf(log_file, "%s\n", new_log->message);
     }
     fclose(log_file);
@@ -87,26 +106,29 @@ static void* logger_func(void* args)
  */
 int logger_init(void)
 {
-    if(logger_instance == NULL){
+    if(g_logger_initialized == 0){
+        g_logger_initialized = 1;
         g_buffer = queue_create_new(LOGGER_BUFFER_CAPACITY, sizeof(log_line_t));
         logger_instance = malloc(sizeof(logger_t));
-        logger_instance->terminate = false;
+        logger_instance->terminate = 0;
         if(pthread_cond_init(&logger_instance->less, NULL)!=0){
             perror("Logger cv init error");
-            free(logger_instance);
-            return -1;
+            goto exit_error;
         }
         if(pthread_cond_init(&logger_instance->more, NULL)!=0){
             perror("Logger cv init error");
-            free(logger_instance);
-            return -1;
+            goto exit_error;
         }
         if (pthread_create(&logger_instance->log_thread, NULL, logger_func, NULL) != 0){
             perror("Logger thread init error");
-            free(logger_instance);
-            return -1;
+            goto exit_error;
         }
         return 0;
+
+        exit_error:
+        free(logger_instance);
+        g_logger_initialized = 0;
+        return -1;
     }
     return -1;
 }
@@ -116,7 +138,7 @@ int logger_init(void)
  */
 void destroy_logger(void){
     if(logger_instance != NULL){
-        logger_instance->terminate = true;
+        logger_instance->terminate = 1;
         pthread_join(logger_instance->log_thread, NULL);
         free(logger_instance);
         queue_delete(g_buffer);

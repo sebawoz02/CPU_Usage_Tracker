@@ -59,7 +59,7 @@ static void* reader_func(void* args)
 
         pthread_cond_signal(&g_ra_more_cv);
         pthread_mutex_unlock(mut);
-        logger_write("READER - new data to analyzer sent", LOG_INFO);
+        logger_write("READER - new data to analyze sent", LOG_INFO);
 
         if(g_termination_req == 1)
             break;
@@ -116,7 +116,7 @@ static void* analyzer_func(void* args)
 
         pthread_cond_signal(&g_ra_less_cv);
         pthread_mutex_unlock(mut);
-        logger_write("ANALYZER - new data to anlyzer received", LOG_INFO);
+        logger_write("ANALYZER - new data to anlyze received", LOG_INFO);
 
         // Consume / Analyze
         if (first_iter)
@@ -338,42 +338,42 @@ int main(void)
         thread_join_create_error("Failed to create reader thread");
         return -1;
     }
-    logger_write("MAIN - Reader thread created", LOG_INFO);
+    logger_write("MAIN - Reader thread created", LOG_STARTUP);
     // Create Analyzer thread
     if(pthread_create(&g_analyzer_th, NULL, analyzer_func, NULL) != 0) {
         thread_join_create_error("Failed to create analyzer thread");
         return -1;
     }
-    logger_write("MAIN - Analyzer thread created", LOG_INFO);
+    logger_write("MAIN - Analyzer thread created", LOG_STARTUP);
     // Create Printer thread
     if(pthread_create(&g_printer_th, NULL, printer_func, NULL) != 0) {
         thread_join_create_error("Failed to create analyzer thread");
         return -1;
     }
-    logger_write("MAIN - Printer thread created", LOG_INFO);
+    logger_write("MAIN - Printer thread created", LOG_STARTUP);
 
     if(pthread_join(g_reader_th, NULL) != 0) {
         thread_join_create_error("Failed to join printer thread");
         return -1;
     }
-    logger_write("Reader thread left with success", LOG_INFO);
+    logger_write("Reader thread finished", LOG_WARNING);
     if(pthread_join(g_analyzer_th, NULL) != 0) {
         thread_join_create_error("Failed to join analyzer thread");
         return -1;
     }
-    logger_write("Analyzer thread left with success", LOG_INFO);
+    logger_write("Analyzer thread finished", LOG_WARNING);
     if(pthread_join(g_printer_th, NULL) != 0) {
         thread_join_create_error("Failed to join reader thread");
         return -1;
     }
-    logger_write("Printer thread left with success", LOG_INFO);
+    logger_write("Printer thread finished", LOG_WARNING);
 
     printf("exit\n");
 
     //Close logger and cleanup data
     queues_cleanup();
     destroy_cv();
-    logger_write("Closing program", LOG_WARNING);
+    logger_write("Closing program", LOG_INFO);
     destroy_logger();
 
     return 0;

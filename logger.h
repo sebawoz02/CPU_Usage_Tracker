@@ -13,7 +13,9 @@ typedef enum
 {
     LOG_INFO    = 0,
     LOG_WARNING = 1,
-    LOG_ERROR   = 2
+    LOG_ERROR   = 2,
+    LOG_STARTUP = 3,
+    LOG_DEBUG = 4
 } log_level_t;
 
 int logger_init(void);
