@@ -5,8 +5,6 @@
 
 #include "queue.h"
 
-typedef struct log_line log_line_t;
-
 typedef struct Logger logger_t;
 
 typedef enum

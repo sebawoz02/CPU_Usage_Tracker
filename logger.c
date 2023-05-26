@@ -7,14 +7,15 @@
 #define LOGGER_MSG_MAX_SIZE 255 //256-th is null terminator
 #define LOGGER_BUFFER_CAPACITY 128
 
-struct log_line{
+typedef struct log_line{
     log_level_t log_level;
     char message[LOGGER_MSG_MAX_SIZE + 1];
-};
+}log_line_t;
 
 struct Logger{
     pthread_t log_thread;
     sig_atomic_t term_flag;
+    // 4B alignment
 };
 
 static logger_t* logger_instance = NULL;
