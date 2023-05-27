@@ -26,11 +26,6 @@ static size_t g_no_cpus;    // number of cpus
  */
 static void* reader_func(void* args)
 {
-    sigset_t threadMask;
-    sigemptyset(&threadMask);
-    sigaddset(&threadMask, SIGTERM);
-    pthread_sigmask(SIG_BLOCK, &threadMask, NULL);
-
     while(1)
     {
         // Produce
@@ -74,11 +69,6 @@ static void* analyzer_func(void* args)
         free(prev_total);
         return NULL;
     }
-    sigset_t threadMask;
-    sigemptyset(&threadMask);
-    sigaddset(&threadMask, SIGTERM);
-    pthread_sigmask(SIG_BLOCK, &threadMask, NULL);
-
     while(g_termination_req == 0)
     {
         // Pop from buffer
@@ -100,13 +90,14 @@ static void* analyzer_func(void* args)
         }
         else
         {
-            double* to_print = malloc(sizeof(double)*(g_no_cpus+1));
+            Usage_percentage to_print;
+            to_print.cores_pr = malloc(sizeof(double)*(g_no_cpus));
             //Total
-            to_print[0] =  analyzer_analyze(&prev_total[0], &prev_idle[0], data->total);
+            to_print.total_pr =  analyzer_analyze(&prev_total[0], &prev_idle[0], data->total);
 
             // Cores
             for (size_t j = 0; j < g_no_cpus; ++j)
-                to_print[j+1] =  analyzer_analyze(&prev_total[j+1], &prev_idle[j+1], data->cpus[j]);
+                to_print.cores_pr[j] =  analyzer_analyze(&prev_total[j+1], &prev_idle[j+1], data->cpus[j]);
 
             // Send to print
             if(queue_enqueue(g_analyzer_printer_queue, &to_print) != 0)
@@ -133,21 +124,14 @@ static void* analyzer_func(void* args)
  */
 static void* printer_func(void* args)
 {
-    // Only main thread needs to set the flag
-    sigset_t threadMask;
-    sigemptyset(&threadMask);
-    sigaddset(&threadMask, SIGTERM);
-    pthread_sigmask(SIG_BLOCK, &threadMask, NULL);
-
-    system("clear");
-
+    //system("clear");
     // printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");  // print here using tput
-    double *to_print;
+    Usage_percentage* to_print = malloc(sizeof(double)*(g_no_cpus+1));
     while(g_termination_req == 0)
     {
         size_t i;
         // Remove from buffer
-        if (queue_dequeue(g_analyzer_printer_queue, &to_print) != 0)
+        if (queue_dequeue(g_analyzer_printer_queue, to_print) != 0)
         {
             logger_write("Printer error while removing data from the buffer", LOG_ERROR);
             return NULL;
@@ -159,31 +143,31 @@ static void* printer_func(void* args)
         system("clear");
         printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");
         printf("TOTAL:\t ╠");
-        size_t pr = (size_t) to_print[0];
+        size_t pr = (size_t) to_print->total_pr;
         for (i = 0; i < pr; i++)
             printf("▒");
 
         for (i = 0; i < 100 - pr; i++)
             printf("-");
 
-        printf("╣ %.1f%% \n", to_print[0]);
+        printf("╣ %.1f%% \n", to_print->total_pr);
 
-        for (size_t j = 1; j < g_no_cpus + 1; j++)
+        for (size_t j = 0; j < g_no_cpus; j++)
         {
-            printf("\033[0;%zumcpu%zu:\t ╠", 31 + ((j - 1) % 6), j);
-            pr = (size_t) to_print[j];
+            printf("\033[0;%zumcpu%zu:\t ╠", 31 + (j % 6), j+1);
+            pr = (size_t) to_print->cores_pr[j];
             for (i = 0; i < pr; i++)
                 printf("▒");
 
             for (i = 0; i < 100 - pr; i++)
                 printf("-");
 
-            printf("╣ %.1f%% \n", to_print[j]);
+            printf("╣ %.1f%% \n", to_print->cores_pr[j]);
         }
         printf("\033[0m");
-
-        free(to_print);
+        free(to_print->cores_pr);
     }
+    free(to_print);
     return NULL;
 }
 

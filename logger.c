@@ -35,7 +35,7 @@ static void createLogFileName(char* fileName)
     time(&rawTime);
     timeInfo = localtime(&rawTime);
 
-    strftime(fileName, 256, "../logs/log_%Y%m%d_%H%M%S.txt", timeInfo);
+    strftime(fileName, 256, "log_%Y%m%d_%H%M%S.txt", timeInfo);
 }
 
 // Logger thread func - appends logs to the file
@@ -44,12 +44,6 @@ static void* logger_func(void* args)
     char filename[256];
 
     createLogFileName(filename);
-    FILE* log_file = fopen(filename, "a+");
-    if(log_file == NULL)
-    {
-        perror("Logger failed to create new file.");
-        return NULL;
-    }
     log_line_t* new_log = malloc(sizeof(log_line_t));
 
     while(logger_instance->term_flag == 0 || !queue_is_empty(g_buffer))
@@ -84,11 +78,17 @@ static void* logger_func(void* args)
         // Formatowanie daty i godziny
         strftime(dateTime, sizeof(dateTime), "%Y-%m-%d %H:%M:%S", localTime);
 
+        FILE* log_file = fopen(filename, "a+");
+        if(log_file == NULL)
+        {
+            perror("Logger failed to create new file.");
+            return NULL;
+        }
         fprintf(log_file, "%s\t", prefix);
         fprintf(log_file, "[%s]\t", dateTime);
         fprintf(log_file, "%s\n", new_log->message);
+        fclose(log_file);
     }
-    fclose(log_file);
     free(new_log);
     return NULL;
 }
