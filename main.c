@@ -16,7 +16,18 @@
 // SIGNAL HANDLER
 // volatile sig_atomic_t can be used to communicate only with a handler running in the same thread.
 // C11 states that the use of the signal function in a multithreaded program is undefined behavior
-static atomic_bool g_termination_flag = ATOMIC_VAR_INIT(0);
+// This solution succeeds on platforms where the atomic_int type is always lock-free.
+// The ATOMIC_INT_LOCK_FREE macro may have a value of 0, indicating that the type is never lock-free; a value of 1,
+// indicating that the type is sometimes lock-free; or a value of 2, indicating that the type is always lock-free.
+#if ATOMIC_INT_LOCK_FREE == 0 || ATOMIC_INT_LOCK_FREE == 1
+typedef volatile sig_atomic_t flag_type;
+#define compare_flag(a, b) a == b
+#else
+typedef atomic_int flag_type;
+#define compare_flag(a, b) atomic_load(&g_termination_flag) == b
+#endif
+
+static flag_type g_termination_flag = ATOMIC_VAR_INIT(0);
 
 // Reader - Analyzer : Producer - Consumer problem
 static Queue* g_reader_analyzer_queue;
@@ -27,12 +38,15 @@ static Queue* g_analyzer_printer_queue;
 // Number of cpus
 static size_t g_no_cpus;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
 // SIGTERM sets termination flag which tells all the threads to clean data and exit
 static void signal_handler(int signum)
 {
     if(signum == SIGTERM)
-        atomic_store(&g_termination_flag, 1);
+        g_termination_flag = 1;
 }
+#pragma GCC diagnostic pop
 
 /**
  * Reader thread function
@@ -52,7 +66,7 @@ static void* reader_func(void* args)
         }
         logger_write("READER - new data to analyze sent", LOG_INFO);
 
-        if(atomic_load(&g_termination_flag))
+        if(compare_flag(g_termination_flag, 1))
             break;
 
         logger_write("READER - goes to sleep", LOG_INFO);
@@ -85,7 +99,7 @@ static void* analyzer_func(void* args)
         free(prev_total);
         pthread_exit(NULL);
     }
-    while(!atomic_load(&g_termination_flag))
+    while(compare_flag(g_termination_flag, 0))
     {
         // Pop from buffer
         // Queue structure is thread safe
@@ -146,7 +160,7 @@ static void* printer_func(void* args)
         logger_write("Allocation error in printer thread", LOG_ERROR);
         pthread_exit(NULL);
     }
-    while(!atomic_load(&g_termination_flag))
+    while(compare_flag(g_termination_flag, 0))
     {
         size_t i;
         // Remove from buffer
@@ -207,11 +221,11 @@ static void* watchdog_func(void* args)
     timeout.tv_sec = now.tv_sec + 2;  // Timeout set to 2 seconds
     timeout.tv_nsec = now.tv_usec * 1000;
 
-    while(!atomic_load(&g_termination_flag))
+    while(compare_flag(g_termination_flag, 0))
     {
         // Wait 2 seconds for signal
         int result = pthread_cond_timedwait(&wdc->signal_cv, &wdc->mutex, &timeout);
-        if (result != 0 && !atomic_load(&g_termination_flag))
+        if (result != 0 && compare_flag(g_termination_flag, 0))
         {
             char message[100];
             strcat(message,"Watchdog got no signal from thread: ");

@@ -22,4 +22,5 @@ make CUT -C build
 
 **Suppressed warnings from -Weverything:**
 - -Wdeclaration-after-statement - the program is not written for the c90 standard
+- -Wno-atomic-implicit-seq-cst- (Only in signal handler) calls to atomic functions are not permitted in signal handlers.
 
