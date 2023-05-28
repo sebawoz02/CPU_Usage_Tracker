@@ -10,8 +10,8 @@ typedef struct Queue Queue; // Forward declaration
 Queue* queue_create_new(size_t capacity, size_t data_size);
 void queue_delete(Queue* q);
 
-bool queue_is_full(const Queue * q);
-bool queue_is_empty(const Queue* q);
+bool queue_is_full(Queue * q);
+bool queue_is_empty(Queue* q);
 bool queue_is_corrupted(const Queue* q);
 
 int queue_enqueue(Queue* restrict q, void* restrict elem);

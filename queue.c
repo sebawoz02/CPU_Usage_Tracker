@@ -80,15 +80,18 @@ void queue_delete(Queue* q)
  * @param q - queue
  * @return True if full else false.
  */
-bool queue_is_full(const Queue * q)
+bool queue_is_full(Queue * q)
 {
     if(q == NULL)
         return false;
     if(queue_is_corrupted(q))
         return false;
-
-    if(q->cur_no_elements == q->capacity)
+    pthread_mutex_lock(&q->mutex);
+    if(q->cur_no_elements == q->capacity) {
+        pthread_mutex_unlock(&q->mutex);
         return true;
+    }
+    pthread_mutex_unlock(&q->mutex);
     return false;
 }
 
@@ -97,15 +100,18 @@ bool queue_is_full(const Queue * q)
  * @param q - queue
  * @return True if empty else false.
  */
-bool queue_is_empty(const Queue* q)
+bool queue_is_empty(Queue* q)
 {
     if(q == NULL)
         return false;
     if(queue_is_corrupted(q))
         return false;
-
-    if(q->cur_no_elements == 0)
+    pthread_mutex_lock(&q->mutex);
+    if(q->cur_no_elements == 0) {
+        pthread_mutex_unlock(&q->mutex);
         return true;
+    }
+    pthread_mutex_unlock(&q->mutex);
     return false;
 }
 
