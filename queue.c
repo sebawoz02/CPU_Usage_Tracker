@@ -44,39 +44,20 @@ Queue* queue_create_new(const size_t capacity, const size_t data_size)
     if(data_size == 0)
         return NULL;
 
-    Queue* const q = calloc(1, sizeof(*q) + (data_size*capacity));  // Flexible Array Member
+    Queue* const q = malloc(sizeof(*q) + (data_size*capacity));  // Flexible Array Member
     if(q == NULL)
         return NULL;
 
-    if(pthread_mutex_init(&q->mutex, NULL)!=0)
-    {
-        perror("Queue mutex init error\n");
-        free(q);
-        return NULL;
-    }
-    if(pthread_cond_init(&q->less_cv, NULL)!=0)
-    {
-        perror("Queue cond variable init error\n");
-        pthread_mutex_destroy(&q->mutex);
-        free(q);
-        return NULL;
-    }
-    if(pthread_cond_init(&q->more_cv, NULL)!=0)
-    {
-        perror("Queue cond variable init error\n");
-        pthread_mutex_destroy(&q->mutex);
-        pthread_cond_destroy(&q->less_cv);
-        free(q);
-        return NULL;
-    }
-
-    q->tail = 0;
-    q->head = 0;
-    q->cur_no_elements = 0;
-    q->magic = QUEUE_MAGIC_NUMBER;
-    q->capacity = capacity;
-    q->elem_size = data_size;
-
+    *q = (Queue){.mutex = PTHREAD_MUTEX_INITIALIZER,
+                 .more_cv = PTHREAD_COND_INITIALIZER,
+                 .less_cv = PTHREAD_COND_INITIALIZER,
+                 .magic = QUEUE_MAGIC_NUMBER,
+                 .tail = 0,
+                 .head = 0,
+                 .cur_no_elements = 0,
+                 .elem_size = data_size,
+                 .capacity = capacity
+                } ;
     return q;
 }
 
