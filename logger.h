@@ -17,6 +17,6 @@ int logger_init(void);
 
 void logger_write(const char* msg, log_level_t log_level);
 
-void destroy_logger(void);
+void logger_destroy(void);
 
 #endif //CPU_USAGE_TRACKER_LOGGER_H

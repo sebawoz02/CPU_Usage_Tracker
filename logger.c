@@ -128,7 +128,7 @@ int logger_init(void)
 /**
  * Stops current logger thread.
  */
-void destroy_logger(void)
+void logger_destroy(void)
 {
     if(logger_instance != NULL)
     {

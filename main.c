@@ -26,7 +26,6 @@ static pthread_t g_printer_th;
 static size_t g_no_cpus;    // number of cpus
 
 
-
 // SIGTERM sets termination flag which tells all the threads to clean data and exit
 static void signal_handler(int signum)
 {
@@ -210,7 +209,7 @@ static void* watchdog_func(void* args)
 
     while(g_termination_req == 0)
     {
-        // Wait 2 seconds
+        // Wait 2 seconds for signal
         int result = pthread_cond_timedwait(&wdc->signal_cv, &wdc->mutex, &timeout);
         if (result != 0 && g_termination_req == 0)
         {
@@ -223,6 +222,11 @@ static void* watchdog_func(void* args)
             logger_write(message, LOG_ERROR);
             // Program termination
             perror("NO SIGNAL FROM THREAD for 2 seconds");
+            g_termination_req = 1;
+            // Wait 2 seconds to give other threads chance to clean up data and exit
+            sleep(2);
+            logger_destroy();
+            free(wdc);
             exit(-1);
         } else
         {   // Timeout reset
@@ -262,7 +266,7 @@ static void thread_join_create_error(const char* msg)
 {
     logger_write(msg, LOG_ERROR);
     queues_cleanup();
-    destroy_logger();
+    logger_destroy();
 }
 
 int main(void)
@@ -280,14 +284,14 @@ int main(void)
     if(g_no_cpus == 0)
     {
         logger_write("Error while getting information about no cores", LOG_ERROR);
-        destroy_logger();
+        logger_destroy();
         return -1;
     }
     g_reader_analyzer_queue = queue_create_new(10, sizeof(Stats)*(g_no_cpus+1));
     if(g_reader_analyzer_queue == NULL)
     {
         logger_write("Create new queue error", LOG_ERROR);
-        destroy_logger();
+        logger_destroy();
         return -1;
     }
     g_analyzer_printer_queue = queue_create_new(10, sizeof(double)*(g_no_cpus+1));
@@ -295,7 +299,7 @@ int main(void)
     {
         queue_delete(g_reader_analyzer_queue);
         logger_write("Create new queue error", LOG_ERROR);
-        destroy_logger();
+        logger_destroy();
         return -1;
     }
     pthread_t watchdogs[3];
@@ -354,7 +358,7 @@ int main(void)
     // Cleanup data and destroy logger
     queues_cleanup();
     logger_write("Closing program", LOG_INFO);
-    destroy_logger();
+    logger_destroy();
 
     return 0;
 }
