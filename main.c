@@ -121,7 +121,6 @@ static void* analyzer_func(void* args)
             logger_write("ANALYZER - new data to print sent", LOG_INFO);
         }
         free(data->cpus);
-
         watchdog_send_signal(wdc);
     }
     // Cleanup
