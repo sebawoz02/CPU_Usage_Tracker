@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <string.h>
 
 #include "queue.h"
 #include "reader.h"
@@ -192,6 +193,10 @@ static void* printer_func(void* args)
     pthread_exit(NULL);
 }
 
+/**
+ * Watchdog thread uses passed as parameters mutex and condition variable to communicate with one thread.
+ * After not receiving any signal for 2 seconds he assumes that the thread is jammed and terminates the program.
+ */
 static void* watchdog_func(void* args)
 {
     wd_communication_t* wdc = (wd_communication_t*) args;
@@ -209,7 +214,13 @@ static void* watchdog_func(void* args)
         int result = pthread_cond_timedwait(&wdc->signal_cv, &wdc->mutex, &timeout);
         if (result != 0 && g_termination_req == 0)
         {
-            logger_write("Watchdog got no signal from thread for 2 seconds", LOG_ERROR);
+            char message[100];
+            strcat(message,"Watchdog got no signal from thread: ");
+            char th_id[128];
+            sprintf(th_id, "%ld", wdc->monitored_thread);
+            strcat(message, th_id);
+            strcat(message, "\0");
+            logger_write(message, LOG_ERROR);
             // Program termination
             perror("NO SIGNAL FROM THREAD for 2 seconds");
             exit(-1);
@@ -306,14 +317,14 @@ int main(void)
     // Create Printer thread
     if(watchdog_create_thread(&g_printer_th, printer_func, &watchdogs[2], watchdog_func) != 0)
     {
-        thread_join_create_error("Failed to create analyzer thread");
+        thread_join_create_error("Failed to create printer thread");
         return -1;
     }
     logger_write("MAIN - Printer thread created", LOG_STARTUP);
 
     if(pthread_join(g_reader_th, NULL) != 0)
     {
-        thread_join_create_error("Failed to join printer thread");
+        thread_join_create_error("Failed to join reader thread");
         return -1;
     }
     logger_write("Reader thread finished", LOG_WARNING);
@@ -325,7 +336,7 @@ int main(void)
     logger_write("Analyzer thread finished", LOG_WARNING);
     if(pthread_join(g_printer_th, NULL) != 0)
     {
-        thread_join_create_error("Failed to join reader thread");
+        thread_join_create_error("Failed to join printer thread");
         return -1;
     }
     logger_write("Printer thread finished", LOG_WARNING);

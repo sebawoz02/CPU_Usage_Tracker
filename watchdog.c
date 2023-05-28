@@ -35,7 +35,7 @@ int watchdog_create_thread(pthread_t* thread, void* (*th_fun)(void*), pthread_t*
         pthread_cond_destroy(&wdc->signal_cv);
         goto error_handler;
     }
-
+    wdc->monitored_thread = *thread;
     return 0;
     
     error_handler:

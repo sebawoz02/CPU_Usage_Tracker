@@ -5,6 +5,7 @@
 #include <pthread.h>
 
 typedef struct Watchdog_communication{
+    pthread_t monitored_thread;
     pthread_mutex_t mutex;
     pthread_cond_t signal_cv;
 } wd_communication_t;
