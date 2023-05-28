@@ -76,7 +76,12 @@ static void* reader_func(void* args)
 
         logger_write("READER - goes to sleep", LOG_INFO);
         watchdog_send_signal(wdc);
-        sleep(1);   // Wait one second - its thread-safe when only one thread uses sleep function
+
+        // sleep 1 second
+        struct timespec sleepTime;
+        sleepTime.tv_sec = 1;
+        sleepTime.tv_nsec = 0;
+        nanosleep(&sleepTime, NULL);
     }
     pthread_exit(NULL);
 }
