@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 
@@ -75,43 +74,21 @@ void queue_delete(Queue* q)
     free(q);
 }
 
+
 /**
  * Determines whether the queue is full.
  * @param q - queue
  * @return True if full else false.
  */
-bool queue_is_full(Queue * q)
+bool queue_is_full(const Queue * q)
 {
     if(q == NULL)
         return false;
     if(queue_is_corrupted(q))
         return false;
-    pthread_mutex_lock(&q->mutex);
-    if(q->cur_no_elements == q->capacity) {
-        pthread_mutex_unlock(&q->mutex);
-        return true;
-    }
-    pthread_mutex_unlock(&q->mutex);
-    return false;
-}
 
-/**
- * Determines whether the queue is empty.
- * @param q - queue
- * @return True if empty else false.
- */
-bool queue_is_empty(Queue* q)
-{
-    if(q == NULL)
-        return false;
-    if(queue_is_corrupted(q))
-        return false;
-    pthread_mutex_lock(&q->mutex);
-    if(q->cur_no_elements == 0) {
-        pthread_mutex_unlock(&q->mutex);
+    if(q->cur_no_elements == q->capacity)
         return true;
-    }
-    pthread_mutex_unlock(&q->mutex);
     return false;
 }
 
@@ -127,6 +104,22 @@ bool queue_is_corrupted(const Queue* q)
     return q->magic != QUEUE_MAGIC_NUMBER;
 }
 
+/**
+ * Determines whether the queue is empty.
+ * @param q - queue
+ * @return True if empty else false.
+ */
+bool queue_is_empty(const Queue* q)
+{
+    if(q == NULL)
+        return false;
+    if(queue_is_corrupted(q))
+        return false;
+
+    if(q->cur_no_elements == 0)
+        return true;
+    return false;
+}
 
 /**
  * Adds new element to the queue. When queue is full condition variable is used to wait for another thread to remove data.

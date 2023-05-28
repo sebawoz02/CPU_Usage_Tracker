@@ -16,30 +16,25 @@ int watchdog_create_thread(pthread_t* thread, void* (*th_fun)(void*), pthread_t*
         logger_write("Watchdog allocation error", LOG_ERROR);
         return -1;
     }
-    if(pthread_mutex_init(&wdc->mutex, NULL) != 0){
-        logger_write("Watchdog mutex init error", LOG_ERROR);
-        free(wdc);
-        return -1;
-    }
-    if(pthread_cond_init(&wdc->signal_cv, NULL) != 0){
-        logger_write("Watchdog cv init error", LOG_ERROR);
-        goto error_handler;
-    }
+
+    *wdc = (wd_communication_t){.mutex = PTHREAD_MUTEX_INITIALIZER,
+                                .signal_cv = PTHREAD_COND_INITIALIZER,
+                                .monitored_thread = *thread
+                                };
+
     if(pthread_create(thread, NULL, th_fun, wdc) != 0){
         logger_write("Monitored thread create error", LOG_ERROR);
-        pthread_cond_destroy(&wdc->signal_cv);
         goto error_handler;
     }
     if(pthread_create(wd_thread, NULL, watchdog_func, wdc) != 0){
         logger_write("Watchdog thread create error", LOG_ERROR);
-        pthread_cond_destroy(&wdc->signal_cv);
         goto error_handler;
     }
-    wdc->monitored_thread = *thread;
     return 0;
     
     error_handler:
         pthread_mutex_destroy(&wdc->mutex);
+        pthread_cond_destroy(&wdc->signal_cv);
         free(wdc);
         return -1;
 }
