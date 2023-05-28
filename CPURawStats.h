@@ -13,12 +13,12 @@ typedef struct Stats{
     uint32_t irq;
     uint32_t sortirq;
     uint32_t steal;
-}Stats;
+}stats_t;
 
 typedef struct CPURawStats{
-    Stats total;
-    Stats* cpus;
-} CPURawStats;
+    stats_t total;
+    stats_t* cpus;
+} CPURawStats_t;
 
 
 #endif //CPU_USAGE_TRACKER_CPURAWSTATS_H

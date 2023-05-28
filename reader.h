@@ -7,6 +7,6 @@
 
 size_t reader_get_no_cpus(void);
 
-CPURawStats reader_load_data(size_t no_cpus);
+CPURawStats_t reader_load_data(size_t no_cpus);
 
 #endif //CPU_USAGE_TRACKER_READER_H
