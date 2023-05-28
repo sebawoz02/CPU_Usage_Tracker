@@ -1,11 +1,8 @@
 
 #ifndef CPU_USAGE_TRACKER_LOGGER_H
 #define CPU_USAGE_TRACKER_LOGGER_H
-#include <signal.h>
 
 #include "queue.h"
-
-typedef struct Logger logger_t;
 
 typedef enum
 {

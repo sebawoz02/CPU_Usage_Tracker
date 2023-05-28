@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
+#include <pthread.h>
 
 #include "logger.h"
 
-#define LOGGER_MSG_MAX_SIZE 255 //256-th is null terminator
+#define LOGGER_MSG_MAX_SIZE 255 // 256-th is null terminator
 #define LOGGER_BUFFER_CAPACITY 128
 
 typedef struct log_line{
@@ -12,11 +14,12 @@ typedef struct log_line{
     char message[LOGGER_MSG_MAX_SIZE + 1];
 }log_line_t;
 
-struct Logger{
-    pthread_t log_thread;
-    sig_atomic_t term_flag;
-    // 4B alignment
-};
+typedef struct Logger{
+    pthread_t log_thread;   // 8B
+    sig_atomic_t term_flag; // 4B
+    char pad[4];// 4B padding
+} logger_t;
+
 
 static logger_t* logger_instance = NULL;
 static sig_atomic_t g_logger_initialized = 0;
@@ -41,10 +44,15 @@ static void createLogFileName(char* fileName)
 // Logger thread func - appends logs to the file
 static void* logger_func(void* args)
 {
+    (void)args;
     char filename[256];
 
     createLogFileName(filename);
     log_line_t* new_log = malloc(sizeof(log_line_t));
+    if(new_log == NULL){
+        perror("Allocation error in logger thread");
+        pthread_exit(NULL);
+    }
 
     while(logger_instance->term_flag == 0 || !queue_is_empty(g_buffer))
     {
@@ -53,19 +61,19 @@ static void* logger_func(void* args)
         char prefix[32];
         switch (new_log->log_level) {
             case LOG_INFO:
-                strcpy(prefix, "[INFO]");
+                strcpy(prefix, "[INFO]\t");
                 break;
             case LOG_WARNING:
                 strcpy(prefix, "[WARNING]");
                 break;
             case LOG_ERROR:
-                strcpy(prefix, "[ERROR]");
+                strcpy(prefix, "[ERROR]\t");
                 break;
             case LOG_STARTUP:
                 strcpy(prefix, "[STARTUP]");
                 break;
             case LOG_DEBUG:
-                strcpy(prefix, "[DEBUG]");
+                strcpy(prefix, "[DEBUG]\t");
                 break;
         }
         time_t currentTime;
@@ -82,19 +90,19 @@ static void* logger_func(void* args)
         if(log_file == NULL)
         {
             perror("Logger failed to create new file.");
-            return NULL;
+            pthread_exit(NULL);
         }
+        fprintf(log_file, "[%s]", dateTime);
         fprintf(log_file, "%s\t", prefix);
-        fprintf(log_file, "[%s]\t", dateTime);
         fprintf(log_file, "%s\n", new_log->message);
         fclose(log_file);
     }
     free(new_log);
-    return NULL;
+    pthread_exit(NULL);
 }
 
 /**
- * Creates logger_cv instance. If one instance already exists no action performed.
+ * Creates logger thread. If one thread is already running no action performed.
  * @return return 0 on success, else -1
  */
 int logger_init(void)
@@ -139,6 +147,8 @@ void destroy_logger(void)
 void logger_write(const char* msg, log_level_t log_level)
 {
     if(logger_instance == NULL)
+        return;
+    if(logger_instance->term_flag != 0)     // Logger is closed for receiving new messages
         return;
     if(g_buffer == NULL)
         return;

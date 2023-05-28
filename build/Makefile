@@ -169,6 +169,19 @@ logger/fast:
 .PHONY : logger/fast
 
 #=============================================================================
+# Target rules for targets named watchdog
+
+# Build rule for target.
+watchdog: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 watchdog
+.PHONY : watchdog
+
+# fast build rule for target.
+watchdog/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/watchdog.dir/build.make CMakeFiles/watchdog.dir/build
+.PHONY : watchdog/fast
+
+#=============================================================================
 # Target rules for targets named CUT
 
 # Build rule for target.
@@ -386,6 +399,30 @@ tests/test_reader.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test.dir/build.make CMakeFiles/test.dir/tests/test_reader.c.s
 .PHONY : tests/test_reader.c.s
 
+watchdog.o: watchdog.c.o
+.PHONY : watchdog.o
+
+# target to build an object file
+watchdog.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/watchdog.dir/build.make CMakeFiles/watchdog.dir/watchdog.c.o
+.PHONY : watchdog.c.o
+
+watchdog.i: watchdog.c.i
+.PHONY : watchdog.i
+
+# target to preprocess a source file
+watchdog.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/watchdog.dir/build.make CMakeFiles/watchdog.dir/watchdog.c.i
+.PHONY : watchdog.c.i
+
+watchdog.s: watchdog.c.s
+.PHONY : watchdog.s
+
+# target to generate assembly for a file
+watchdog.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/watchdog.dir/build.make CMakeFiles/watchdog.dir/watchdog.c.s
+.PHONY : watchdog.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -400,6 +437,7 @@ help:
 	@echo "... queue"
 	@echo "... reader"
 	@echo "... test"
+	@echo "... watchdog"
 	@echo "... analyzer.o"
 	@echo "... analyzer.i"
 	@echo "... analyzer.s"
@@ -424,6 +462,9 @@ help:
 	@echo "... tests/test_reader.o"
 	@echo "... tests/test_reader.i"
 	@echo "... tests/test_reader.s"
+	@echo "... watchdog.o"
+	@echo "... watchdog.i"
+	@echo "... watchdog.s"
 .PHONY : help
 
 

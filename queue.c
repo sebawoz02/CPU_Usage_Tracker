@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "queue.h"
 
@@ -37,15 +38,13 @@ struct Queue {
  */
 Queue* queue_create_new(const size_t capacity, const size_t data_size)
 {
-    Queue* q;
-
     if(capacity == 0)
         return NULL;
 
     if(data_size == 0)
         return NULL;
 
-    q = malloc(sizeof(*q) + (data_size*capacity));  // Flexible Array Member
+    Queue* const q = calloc(1, sizeof(*q) + (data_size*capacity));  // Flexible Array Member
     if(q == NULL)
         return NULL;
 

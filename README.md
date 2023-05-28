@@ -19,7 +19,6 @@ make CUT -C build
 ./build/CUT
 ```
 
-**Suppressed warnings:**
-- -Wunused-parameter - functions for threads and signal handler are written 
-to match the pattern and in this case their parameters are left unused
+**Suppressed warnings from -Weverything:**
 - -Wdeclaration-after-statement - the program is not written for the c90 standard
+

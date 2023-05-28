@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <sys/time.h>
 
 #include "queue.h"
 #include "reader.h"
 #include "analyzer.h"
 #include "logger.h"
+#include "watchdog.h"
 
 // Signal handling
 static volatile sig_atomic_t g_termination_req = 0;
@@ -21,11 +24,21 @@ static pthread_t g_printer_th;
 
 static size_t g_no_cpus;    // number of cpus
 
+
+
+// SIGTERM sets termination flag which tells all the threads to clean data and exit
+static void signal_handler(int signum)
+{
+    (void)signum;
+    g_termination_req = 1;
+}
+
 /**
  * Reader thread function
  */
 static void* reader_func(void* args)
 {
+    wd_communication_t* wdc = (wd_communication_t*) args;
     while(1)
     {
         // Produce
@@ -34,7 +47,7 @@ static void* reader_func(void* args)
         if(queue_enqueue(g_reader_analyzer_queue, &data) != 0)
         {
             logger_write("Reader error while adding data to the buffer", LOG_ERROR);
-            return NULL;
+            pthread_exit(NULL);
         }
         logger_write("READER - new data to analyze sent", LOG_INFO);
 
@@ -42,9 +55,10 @@ static void* reader_func(void* args)
             break;
 
         logger_write("READER - goes to sleep", LOG_INFO);
+        watchdog_send_signal(wdc);
         sleep(1);   // Wait one second
     }
-    return NULL;
+    pthread_exit(NULL);
 }
 
 /**
@@ -54,12 +68,13 @@ static void* reader_func(void* args)
  */
 static void* analyzer_func(void* args)
 {
+    wd_communication_t* wdc = (wd_communication_t*) args;
     CPURawStats* data = malloc(sizeof(Stats)*(g_no_cpus+1));
 
     bool first_iter = true;
 
-    uint64_t* prev_total = malloc(sizeof(uint64_t)*(g_no_cpus+1));
-    uint64_t* prev_idle = malloc(sizeof(uint64_t)*(g_no_cpus+1));
+    uint64_t* prev_total = calloc(g_no_cpus+1 ,sizeof(uint64_t));
+    uint64_t* prev_idle = calloc(g_no_cpus+1 ,sizeof(uint64_t));
 
     if(prev_total == NULL || prev_idle == NULL)
     {
@@ -67,7 +82,7 @@ static void* analyzer_func(void* args)
         // One of the pointers is possibly not NULL, free(ptr) - If ptr is NULL, no operation is performed.
         free(prev_idle);
         free(prev_total);
-        return NULL;
+        pthread_exit(NULL);
     }
     while(g_termination_req == 0)
     {
@@ -76,9 +91,7 @@ static void* analyzer_func(void* args)
         if (queue_dequeue(g_reader_analyzer_queue, data) != 0)
         {
             logger_write("Analyzer error while removing data from the buffer", LOG_ERROR);
-            free(prev_total);
-            free(prev_idle);
-            return NULL;
+            break;
         }
         logger_write("ANALYZER - new data to analyze received", LOG_INFO);
 
@@ -103,19 +116,19 @@ static void* analyzer_func(void* args)
             if(queue_enqueue(g_analyzer_printer_queue, &to_print) != 0)
             {
                 logger_write("Analyzer error while adding data to the buffer", LOG_ERROR);
-                free(prev_total);
-                free(prev_idle);
-                return NULL;
+                break;
             }
             logger_write("ANALYZER - new data to print sent", LOG_INFO);
         }
         free(data->cpus);
+
+        watchdog_send_signal(wdc);
     }
     // Cleanup
     free(data);
     free(prev_total);
     free(prev_idle);
-    return NULL;
+    pthread_exit(NULL);
 }
 
 /**
@@ -124,9 +137,15 @@ static void* analyzer_func(void* args)
  */
 static void* printer_func(void* args)
 {
-    //system("clear");
-    // printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");  // print here using tput
+    wd_communication_t* wdc = (wd_communication_t*) args;
+    system("clear");
+    printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");  // print here using tput
     Usage_percentage* to_print = malloc(sizeof(double)*(g_no_cpus+1));
+    if(to_print == NULL)
+    {
+        logger_write("Allocation error in printer thread", LOG_ERROR);
+        pthread_exit(NULL);
+    }
     while(g_termination_req == 0)
     {
         size_t i;
@@ -134,14 +153,14 @@ static void* printer_func(void* args)
         if (queue_dequeue(g_analyzer_printer_queue, to_print) != 0)
         {
             logger_write("Printer error while removing data from the buffer", LOG_ERROR);
-            return NULL;
+            break;
         }
         logger_write("PRINTER - new data to print received", LOG_INFO);
 
         // Print
-        //system("tput cup 1 0");  // - Better than clear, but it's buggy when terminal window is too small
-        system("clear");
-        printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");
+        system("tput cup 1 0");  // - Better than clear, but it's buggy when terminal window is too small
+        //system("clear");
+        //printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n"); // print here using clear
         printf("TOTAL:\t ╠");
         size_t pr = (size_t) to_print->total_pr;
         for (i = 0; i < pr; i++)
@@ -166,11 +185,46 @@ static void* printer_func(void* args)
         }
         printf("\033[0m");
         free(to_print->cores_pr);
+
+        watchdog_send_signal(wdc);
     }
     free(to_print);
-    return NULL;
+    pthread_exit(NULL);
 }
 
+static void* watchdog_func(void* args)
+{
+    wd_communication_t* wdc = (wd_communication_t*) args;
+    struct timespec timeout;
+    struct timeval now;
+
+    pthread_mutex_lock(&wdc->mutex);
+    gettimeofday(&now, NULL);
+    timeout.tv_sec = now.tv_sec + 2;  // Timeout set to 2 seconds
+    timeout.tv_nsec = now.tv_usec * 1000;
+
+    while(g_termination_req == 0)
+    {
+        // Wait 2 seconds
+        int result = pthread_cond_timedwait(&wdc->signal_cv, &wdc->mutex, &timeout);
+        if (result != 0 && g_termination_req == 0)
+        {
+            logger_write("Watchdog got no signal from thread for 2 seconds", LOG_ERROR);
+            // Program termination
+            perror("NO SIGNAL FROM THREAD for 2 seconds");
+            exit(-1);
+        } else
+        {   // Timeout reset
+            gettimeofday(&now, NULL);
+            timeout.tv_sec = now.tv_sec + 2;
+            timeout.tv_nsec = now.tv_usec * 1000;
+        }
+    }
+    pthread_mutex_destroy(&wdc->mutex);
+    pthread_cond_destroy(&wdc->signal_cv);
+    free(wdc);
+    return NULL;
+}
 
 /**
  * Frees every element that is currently in the queue and destroys queues.
@@ -199,13 +253,6 @@ static void thread_join_create_error(const char* msg)
     queues_cleanup();
     destroy_logger();
 }
-
-// SIGTERM sets termination flag which tells all the threads to clean data and exit
-static void signal_handler(int signum)
-{
-    g_termination_req = 1;
-}
-
 
 int main(void)
 {
@@ -240,23 +287,24 @@ int main(void)
         destroy_logger();
         return -1;
     }
+    pthread_t watchdogs[3];
 
     // Create Reader thread
-    if(pthread_create(&g_reader_th, NULL, reader_func, NULL) != 0)
+    if(watchdog_create_thread(&g_reader_th, reader_func, &watchdogs[0],watchdog_func) != 0)
     {
         thread_join_create_error("Failed to create reader thread");
         return -1;
     }
     logger_write("MAIN - Reader thread created", LOG_STARTUP);
     // Create Analyzer thread
-    if(pthread_create(&g_analyzer_th, NULL, analyzer_func, NULL) != 0)
+    if(watchdog_create_thread(&g_analyzer_th, analyzer_func, &watchdogs[1],watchdog_func) != 0)
     {
         thread_join_create_error("Failed to create analyzer thread");
         return -1;
     }
     logger_write("MAIN - Analyzer thread created", LOG_STARTUP);
     // Create Printer thread
-    if(pthread_create(&g_printer_th, NULL, printer_func, NULL) != 0)
+    if(watchdog_create_thread(&g_printer_th, printer_func, &watchdogs[2], watchdog_func) != 0)
     {
         thread_join_create_error("Failed to create analyzer thread");
         return -1;
@@ -281,6 +329,14 @@ int main(void)
         return -1;
     }
     logger_write("Printer thread finished", LOG_WARNING);
+
+    for(size_t i = 0; i < 3; i++)
+    {
+        if(pthread_join(watchdogs[i], NULL) != 0){
+            thread_join_create_error("Watchdog thread join error");
+            return -1;
+        }
+    }
 
     printf("exit\n");
 

@@ -67,6 +67,7 @@ all: CMakeFiles/reader.dir/all
 all: CMakeFiles/analyzer.dir/all
 all: CMakeFiles/queue.dir/all
 all: CMakeFiles/logger.dir/all
+all: CMakeFiles/watchdog.dir/all
 all: CMakeFiles/CUT.dir/all
 all: CMakeFiles/test.dir/all
 .PHONY : all
@@ -80,6 +81,7 @@ clean: CMakeFiles/reader.dir/clean
 clean: CMakeFiles/analyzer.dir/clean
 clean: CMakeFiles/queue.dir/clean
 clean: CMakeFiles/logger.dir/clean
+clean: CMakeFiles/watchdog.dir/clean
 clean: CMakeFiles/CUT.dir/clean
 clean: CMakeFiles/test.dir/clean
 .PHONY : clean
@@ -189,6 +191,32 @@ CMakeFiles/logger.dir/clean:
 .PHONY : CMakeFiles/logger.dir/clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/watchdog.dir
+
+# All Build rule for target.
+CMakeFiles/watchdog.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/watchdog.dir/build.make CMakeFiles/watchdog.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/watchdog.dir/build.make CMakeFiles/watchdog.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles --progress-num=15,16 "Built target watchdog"
+.PHONY : CMakeFiles/watchdog.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/watchdog.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/watchdog.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles 0
+.PHONY : CMakeFiles/watchdog.dir/rule
+
+# Convenience name for target.
+watchdog: CMakeFiles/watchdog.dir/rule
+.PHONY : watchdog
+
+# clean rule for target.
+CMakeFiles/watchdog.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/watchdog.dir/build.make CMakeFiles/watchdog.dir/clean
+.PHONY : CMakeFiles/watchdog.dir/clean
+
+#=============================================================================
 # Target rules for target CMakeFiles/CUT.dir
 
 # All Build rule for target.
@@ -196,6 +224,7 @@ CMakeFiles/CUT.dir/all: CMakeFiles/reader.dir/all
 CMakeFiles/CUT.dir/all: CMakeFiles/analyzer.dir/all
 CMakeFiles/CUT.dir/all: CMakeFiles/queue.dir/all
 CMakeFiles/CUT.dir/all: CMakeFiles/logger.dir/all
+CMakeFiles/CUT.dir/all: CMakeFiles/watchdog.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/CUT.dir/build.make CMakeFiles/CUT.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles --progress-num=1,2 "Built target CUT"
@@ -203,7 +232,7 @@ CMakeFiles/CUT.dir/all: CMakeFiles/logger.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/CUT.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles 10
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles 12
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/CUT.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sebastian/CLionProjects/CPU-Usage-Tracker/build/CMakeFiles 0
 .PHONY : CMakeFiles/CUT.dir/rule

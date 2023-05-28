@@ -43,6 +43,7 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/analyzer.dir/DependInfo.cmake"
   "CMakeFiles/queue.dir/DependInfo.cmake"
   "CMakeFiles/logger.dir/DependInfo.cmake"
+  "CMakeFiles/watchdog.dir/DependInfo.cmake"
   "CMakeFiles/CUT.dir/DependInfo.cmake"
   "CMakeFiles/test.dir/DependInfo.cmake"
   )
