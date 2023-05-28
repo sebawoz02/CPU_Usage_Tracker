@@ -23,4 +23,4 @@ make CUT -C build
 **Suppressed warnings from -Weverything:**
 - -Wdeclaration-after-statement - the program is not written for the c90 standard
 - -Wno-atomic-implicit-seq-cst- (Only in signal handler) calls to atomic functions are not permitted in signal handlers.
-
+That is why program uses atomic type variable only when it is lock-free so var=1 operation will be atomic.

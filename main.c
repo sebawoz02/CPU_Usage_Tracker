@@ -14,16 +14,18 @@
 
 
 // SIGNAL HANDLER
-// volatile sig_atomic_t can be used to communicate only with a handler running in the same thread.
+// volatile sig_atomic_t can be used to communicate only with a handler running in the same thread, it does not support multithreaded execution .
 // C11 states that the use of the signal function in a multithreaded program is undefined behavior
-// This solution succeeds on platforms where the atomic_int type is always lock-free.
-// The ATOMIC_INT_LOCK_FREE macro may have a value of 0, indicating that the type is never lock-free; a value of 1,
+// This solution succeeds on platforms where the atomic_bool type is always lock-free
+// (the operation on such a variable will be performed in its entirety, without being interrupted by other threads.)
+// The ATOMIC_BOOL_LOCK_FREE macro may have a value of 0, indicating that the type is never lock-free; a value of 1,
 // indicating that the type is sometimes lock-free; or a value of 2, indicating that the type is always lock-free.
-#if ATOMIC_INT_LOCK_FREE == 0 || ATOMIC_INT_LOCK_FREE == 1
+// Progran uses atomics when the availability of a lock-free atomic type can be determined at compile time; otherwise, it uses volatile sig_atomic_t.
+#if ATOMIC_BOOL_LOCK_FREE == 0 || ATOMIC_BOOL_LOCK_FREE == 1
 typedef volatile sig_atomic_t flag_type;
 #define compare_flag(a, b) a == b
 #else
-typedef atomic_int flag_type;
+typedef atomic_bool flag_type;
 #define compare_flag(a, b) atomic_load(&g_termination_flag) == b
 #endif
 
@@ -37,6 +39,9 @@ static Queue* g_analyzer_printer_queue;
 
 // Number of cpus
 static size_t g_no_cpus;
+
+// Watchdog flag to make sure only one watchdog can execute exit() function which is not thread-safe
+static atomic_flag g_wd_flag = ATOMIC_FLAG_INIT;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
@@ -71,7 +76,7 @@ static void* reader_func(void* args)
 
         logger_write("READER - goes to sleep", LOG_INFO);
         watchdog_send_signal(wdc);
-        sleep(1);   // Wait one second
+        sleep(1);   // Wait one second - its thread-safe when only one thread uses sleep function
     }
     pthread_exit(NULL);
 }
@@ -152,6 +157,7 @@ static void* analyzer_func(void* args)
 static void* printer_func(void* args)
 {
     wd_communication_t* wdc = (wd_communication_t*) args;
+    // system func - there should not be any problems related to thread safety as long as there are no other threads attempting to call system concurrently.
     system("clear");
     // printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");  // print here using tput
     usage_percentage_t* to_print = malloc(sizeof(double)*(g_no_cpus+1));
@@ -236,7 +242,8 @@ static void* watchdog_func(void* args)
             logger_write(message, LOG_ERROR);
             // Program termination
             perror("WATCHDOG GOT NO SIGNAL FROM THREAD - killing process");
-            exit(1);
+            if(!atomic_flag_test_and_set(&g_wd_flag))
+                exit(1);
 
         } else
         {   // Timeout reset
@@ -248,7 +255,7 @@ static void* watchdog_func(void* args)
     pthread_mutex_destroy(&wdc->mutex);
     pthread_cond_destroy(&wdc->signal_cv);
     free(wdc);
-    return NULL;
+    pthread_exit(NULL);
 }
 
 /**
@@ -285,12 +292,13 @@ int main(void)
     pthread_t analyzer_th;
     pthread_t printer_th;
 
-    signal(SIGTERM, signal_handler);
+    if(signal(SIGTERM, signal_handler)== SIG_ERR)
+        return EXIT_FAILURE;
     // Create logger
     if(logger_init() == -1)
     {
         perror("Logger init error");
-        return -1;
+        return EXIT_FAILURE;
     }
 
     // Assign global variables
@@ -299,14 +307,14 @@ int main(void)
     {
         logger_write("Error while getting information about no cores", LOG_ERROR);
         logger_destroy();
-        return -1;
+        return EXIT_FAILURE;
     }
     g_reader_analyzer_queue = queue_create_new(10, sizeof(stats_t)*(g_no_cpus+1));
     if(g_reader_analyzer_queue == NULL)
     {
         logger_write("Create new queue error", LOG_ERROR);
         logger_destroy();
-        return -1;
+        return EXIT_FAILURE;
     }
     g_analyzer_printer_queue = queue_create_new(10, sizeof(double)*(g_no_cpus+1));
     if(g_analyzer_printer_queue == NULL)
@@ -314,7 +322,7 @@ int main(void)
         queue_delete(g_reader_analyzer_queue);
         logger_write("Create new queue error", LOG_ERROR);
         logger_destroy();
-        return -1;
+        return EXIT_FAILURE;
     }
     pthread_t watchdogs[3];
 
@@ -322,40 +330,40 @@ int main(void)
     if(watchdog_create_thread(&reader_th, reader_func, &watchdogs[0], watchdog_func) != 0)
     {
         thread_join_create_error("Failed to create reader thread");
-        return -1;
+        return EXIT_FAILURE;
     }
     logger_write("MAIN - Reader thread created", LOG_STARTUP);
     // Create Analyzer thread
     if(watchdog_create_thread(&analyzer_th, analyzer_func, &watchdogs[1], watchdog_func) != 0)
     {
         thread_join_create_error("Failed to create analyzer thread");
-        return -1;
+        return EXIT_FAILURE;
     }
     logger_write("MAIN - Analyzer thread created", LOG_STARTUP);
     // Create Printer thread
     if(watchdog_create_thread(&printer_th, printer_func, &watchdogs[2], watchdog_func) != 0)
     {
         thread_join_create_error("Failed to create printer thread");
-        return -1;
+        return EXIT_FAILURE;
     }
     logger_write("MAIN - Printer thread created", LOG_STARTUP);
 
     if(pthread_join(reader_th, NULL) != 0)
     {
         thread_join_create_error("Failed to join reader thread");
-        return -1;
+        return EXIT_FAILURE;
     }
     logger_write("Reader thread finished", LOG_WARNING);
     if(pthread_join(analyzer_th, NULL) != 0)
     {
         thread_join_create_error("Failed to join analyzer thread");
-        return -1;
+        return EXIT_FAILURE;
     }
     logger_write("Analyzer thread finished", LOG_WARNING);
     if(pthread_join(printer_th, NULL) != 0)
     {
         thread_join_create_error("Failed to join printer thread");
-        return -1;
+        return EXIT_FAILURE;
     }
     logger_write("Printer thread finished", LOG_WARNING);
 
@@ -363,7 +371,7 @@ int main(void)
     {
         if(pthread_join(watchdogs[i], NULL) != 0){
             thread_join_create_error("Watchdog thread join error");
-            return -1;
+            return EXIT_FAILURE;
         }
     }
 
@@ -374,5 +382,5 @@ int main(void)
     logger_write("Closing program", LOG_INFO);
     logger_destroy();
 
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -33,12 +33,13 @@ static Queue* g_buffer;
 static void createLogFileName(char* fileName)
 {
     time_t rawTime;
-    struct tm* timeInfo;
+    struct tm* timeInfo = malloc(sizeof(*timeInfo));
 
     time(&rawTime);
-    timeInfo = localtime(&rawTime);
+    localtime_r(&rawTime, timeInfo);
 
     strftime(fileName, 256, "log_%Y%m%d_%H%M%S.txt", timeInfo);
+    free(timeInfo);
 }
 
 // Logger thread func - appends logs to the file
@@ -77,13 +78,10 @@ static void* logger_func(void* args)
                 break;
         }
         time_t currentTime;
-        struct tm *localTime;
+        struct tm* localTime = malloc(sizeof(*localTime));
         char dateTime[20];
-        // Pobranie obecnego czasu
         currentTime = time(NULL);
-        // Konwersja czasu na lokalny czas
-        localTime = localtime(&currentTime);
-        // Formatowanie daty i godziny
+        localtime_r(&currentTime, localTime);
         strftime(dateTime, sizeof(dateTime), "%Y-%m-%d %H:%M:%S", localTime);
 
         FILE* log_file = fopen(filename, "a+");
@@ -96,6 +94,7 @@ static void* logger_func(void* args)
         fprintf(log_file, "%s\t", prefix);
         fprintf(log_file, "%s\n", new_log->message);
         fclose(log_file);
+        free(localTime);
     }
     free(new_log);
     pthread_exit(NULL);
