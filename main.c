@@ -221,9 +221,9 @@ static void* watchdog_func(void* args)
             strcat(message, "\0");
             logger_write(message, LOG_ERROR);
             // Program termination
-            perror("NO SIGNAL FROM THREAD for 2 seconds");
-            g_termination_req = 1;
-            pthread_cancel(wdc->monitored_thread);
+            perror("WATCHDOG GOT NO SIGNAL FROM THREAD - killing process");
+            exit(1);
+
         } else
         {   // Timeout reset
             gettimeofday(&now, NULL);
