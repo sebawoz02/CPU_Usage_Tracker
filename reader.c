@@ -122,4 +122,3 @@ CPURawStats reader_load_data(size_t const no_cpus)
     free(buffer);
     return data;
 }
-

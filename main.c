@@ -223,11 +223,7 @@ static void* watchdog_func(void* args)
             // Program termination
             perror("NO SIGNAL FROM THREAD for 2 seconds");
             g_termination_req = 1;
-            // Wait 2 seconds to give other threads chance to clean up data and exit
-            sleep(2);
-            logger_destroy();
-            free(wdc);
-            exit(-1);
+            pthread_cancel(wdc->monitored_thread);
         } else
         {   // Timeout reset
             gettimeofday(&now, NULL);
