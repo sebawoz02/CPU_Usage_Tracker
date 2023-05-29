@@ -11,7 +11,6 @@
 #include "logger.h"
 #include "watchdog.h"
 
-
 // SIGNAL HANDLER
 // volatile sig_atomic_t can be used to communicate only with a handler running in the same thread, it does not support multithreaded execution .
 // C11 states that the use of the signal function in a multithreaded program is undefined behavior
@@ -63,7 +62,7 @@ static void* reader_func(void* args)
         // Produce
         CPURawStats_t data = reader_load_data(g_no_cpus);
         // Add to the buffer
-        if(queue_enqueue(g_reader_analyzer_queue, &data) != 0)
+        if(queue_enqueue(g_reader_analyzer_queue, &data, 2) != 0)
         {
             logger_write("Reader error while adding data to the buffer", LOG_ERROR);
             pthread_exit(NULL);
@@ -112,7 +111,7 @@ static void* analyzer_func(void* args)
     {
         // Pop from buffer
         // Queue structure is thread safe
-        if (queue_dequeue(g_reader_analyzer_queue, data) != 0)
+        if (queue_dequeue(g_reader_analyzer_queue, data, 2) != 0)
         {
             logger_write("Analyzer error while removing data from the buffer", LOG_ERROR);
             break;
@@ -137,7 +136,7 @@ static void* analyzer_func(void* args)
                 to_print.cores_pr[j] =  analyzer_analyze(&prev_total[j+1], &prev_idle[j+1], data->cpus[j]);
 
             // Send to print
-            if(queue_enqueue(g_analyzer_printer_queue, &to_print) != 0)
+            if(queue_enqueue(g_analyzer_printer_queue, &to_print, 2) != 0)
             {
                 logger_write("Analyzer error while adding data to the buffer", LOG_ERROR);
                 break;
@@ -174,7 +173,7 @@ static void* printer_func(void* args)
     {
         size_t i;
         // Remove from buffer
-        if (queue_dequeue(g_analyzer_printer_queue, to_print) != 0)
+        if (queue_dequeue(g_analyzer_printer_queue, to_print, 2) != 0)
         {
             logger_write("Printer error while removing data from the buffer", LOG_ERROR);
             break;
@@ -270,13 +269,13 @@ static void queues_cleanup(void)
     CPURawStats_t to_free_1;
     while(!queue_is_empty(g_reader_analyzer_queue))
     {
-        queue_dequeue(g_reader_analyzer_queue, &to_free_1);
+        queue_dequeue(g_reader_analyzer_queue, &to_free_1, 2);
         free(to_free_1.cpus);
     }
     usage_percentage_t to_free_2;
     while(!queue_is_empty(g_analyzer_printer_queue))
     {
-        queue_dequeue(g_analyzer_printer_queue,&to_free_2);
+        queue_dequeue(g_analyzer_printer_queue,&to_free_2, 2);
         free(to_free_2.cores_pr);
     }
     queue_delete(g_reader_analyzer_queue);

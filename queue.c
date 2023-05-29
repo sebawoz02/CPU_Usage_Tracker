@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 #include "queue.h"
 
@@ -10,7 +11,7 @@
 
 /**
  *  QUEUE STRUCTURE IS DESIGNED TO BE USED IN PRODUCER-CONSUMER PROBLEM.
- *  ALL OPERATIONS ON BUFFER ARE THREAD SAFE,  PROTECTED BY MUTEX AND CONDITION VARIABLES
+ *  ENQUEUE AND DEQUEUE OPERATIONS ARE THREAD SAFE, PROTECTED BY MUTEX AND CONDITION VARIABLES
  *  QUEUE CAN STORE ALL DATA TYPES.
  */
 struct Queue {
@@ -126,18 +127,30 @@ bool queue_is_empty(const Queue* q)
  * data from queue.
  * @param q - queue
  * @param elem - element to add
- * @return 0 if added successfully else -1.
+ * param timeout - max time in seconds to wait for enqueue
+ * @return 0 if added successfully, 1 on timeout and 2 on different error.
  */
-int queue_enqueue(Queue* restrict const q, void* restrict const elem)
+int queue_enqueue(Queue* restrict const q, void* restrict const elem, uint8_t timeout)
 {
     if(q == NULL)
-        return -1;
+        return 2;
     if(elem == NULL)
-        return -1;
+        return 2;
+    struct timespec time;
+    struct timeval now;
 
+    gettimeofday(&now, NULL);
+    time.tv_sec = now.tv_sec + timeout;
+    time.tv_nsec = now.tv_usec * 1000;
     pthread_mutex_lock(&q->mutex);
-    while(queue_is_full(q))
-        pthread_cond_wait(&q->less_cv, &q->mutex);
+
+    while(queue_is_full(q)) {
+        if (pthread_cond_timedwait(&q->less_cv, &q->mutex, &time) != 0) {
+            pthread_mutex_unlock(&q->mutex);
+            return 1;
+        }
+    }
+
 
     uint8_t* const ptr = &q->buffer[q->head*q->elem_size];
     memcpy(ptr, elem, q->elem_size);
@@ -154,20 +167,32 @@ int queue_enqueue(Queue* restrict const q, void* restrict const elem)
  * Removes element from the queue. When queue is empty condition variable is used to wait for another thread to insert data.
  * @param q - queue
  * @param elem - element to delete
+ * @param timeout - max time in seconds to wait for dequeue
  * @return 0 if removed successfully else -1.
  */
-int queue_dequeue(Queue* restrict const q, void* restrict elem)
+int queue_dequeue(Queue* restrict const q, void* restrict elem, uint8_t timeout)
 {
     if(q == NULL)
-        return -1;
+        return 2;
     if(elem == NULL)
-        return -1;
+        return 2;
     if(queue_is_corrupted(q))
-        return -1;
+        return 2;
+
+    struct timespec time;
+    struct timeval now;
+
+    gettimeofday(&now, NULL);
+    time.tv_sec = now.tv_sec + timeout;
+    time.tv_nsec = now.tv_usec * 1000;
 
     pthread_mutex_lock(&q->mutex);
-    while (queue_is_empty(q))
-        pthread_cond_wait(&q->more_cv, &q->mutex);
+    while (queue_is_empty(q)) {
+        if(pthread_cond_timedwait(&q->more_cv, &q->mutex, &time)!=0){
+            pthread_mutex_unlock(&q->mutex);
+            return 1;
+        }
+    }
 
     uint8_t * const ptr = &q->buffer[q->tail * q->elem_size];
     memcpy(elem, ptr, q->elem_size);
