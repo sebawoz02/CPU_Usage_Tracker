@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <signal.h>
+#include <stdatomic.h>
 #include <pthread.h>
 
 #include "logger.h"
@@ -16,13 +16,13 @@ typedef struct log_line{
 
 typedef struct Logger{
     pthread_t log_thread;   // 8B
-    sig_atomic_t term_flag; // 4B
-    char pad[4];// 4B padding
+    bool term_flag; // 1B
+    char pad[7]; // 7B padding
 } logger_t;
 
 
 static logger_t* logger_instance = NULL;
-static sig_atomic_t g_logger_initialized = 0;
+static atomic_flag g_logger_initialized = ATOMIC_FLAG_INIT;
 static Queue* g_buffer;
 
 
@@ -55,10 +55,10 @@ static void* logger_func(void* args)
         pthread_exit(NULL);
     }
 
-    while(logger_instance->term_flag == 0 || !queue_is_empty(g_buffer))
+    while(logger_instance->term_flag == false || !queue_is_empty(g_buffer))
     {
-        queue_dequeue(g_buffer, new_log);
-
+        while (logger_instance->term_flag == false)
+            queue_dequeue(g_buffer, new_log, 2);
         char prefix[32];
         switch (new_log->log_level) {
             case LOG_INFO:
@@ -106,17 +106,16 @@ static void* logger_func(void* args)
  */
 int logger_init(void)
 {
-    if(g_logger_initialized == 0)
+    if(atomic_flag_test_and_set(&g_logger_initialized) == 0)
     {
-        g_logger_initialized = 1;
         g_buffer = queue_create_new(LOGGER_BUFFER_CAPACITY, sizeof(log_line_t));
         logger_instance = malloc(sizeof(logger_t));
-        logger_instance->term_flag = 0;
+        logger_instance->term_flag = false;
         if (pthread_create(&logger_instance->log_thread, NULL, logger_func, NULL) != 0)
         {
             perror("Logger thread init error");
             free(logger_instance);
-            g_logger_initialized = 0;
+            atomic_flag_clear(&g_logger_initialized);
             return -1;
         }
         return 0;
@@ -131,7 +130,7 @@ void logger_destroy(void)
 {
     if(logger_instance != NULL)
     {
-        logger_instance->term_flag = 1;
+        logger_instance->term_flag = true;
         pthread_join(logger_instance->log_thread, NULL);
         free(logger_instance);
         queue_delete(g_buffer);
@@ -161,5 +160,5 @@ void logger_write(const char* msg, log_level_t log_level)
     }
 
     new_log.log_level = log_level;
-    queue_enqueue(g_buffer, &new_log);
+    queue_enqueue(g_buffer, &new_log, 2);
 }
