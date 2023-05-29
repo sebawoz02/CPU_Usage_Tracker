@@ -57,8 +57,10 @@ static void* logger_func(void* args)
 
     while(logger_instance->term_flag == false || !queue_is_empty(g_buffer))
     {
-        while (logger_instance->term_flag == false)
-            queue_dequeue(g_buffer, new_log, 2);
+        QueueErrorCode ret = QTIMEOUT;
+        while (logger_instance->term_flag == false && ret == QTIMEOUT)
+            ret = queue_dequeue(g_buffer, new_log, 2);  // CHECK every 2 seconds if termination flag is not up
+
         char prefix[32];
         switch (new_log->log_level) {
             case LOG_INFO:
@@ -102,9 +104,9 @@ static void* logger_func(void* args)
 
 /**
  * Creates logger thread. If one thread is already running no action performed.
- * @return return 0 on success, else -1
+ * @return return LINIT_SUCCESS on success, else LINIT_ERROR
  */
-int logger_init(void)
+LoggerErrorCode logger_init(void)
 {
     if(atomic_flag_test_and_set(&g_logger_initialized) == 0)
     {
@@ -116,11 +118,11 @@ int logger_init(void)
             perror("Logger thread init error");
             free(logger_instance);
             atomic_flag_clear(&g_logger_initialized);
-            return -1;
+            return LINIT_ERROR;
         }
-        return 0;
+        return LINIT_SUCCESS;
     }
-    return -1;
+    return LINIT_ERROR;
 }
 
 /**

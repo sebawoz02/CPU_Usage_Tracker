@@ -128,14 +128,14 @@ bool queue_is_empty(const Queue* q)
  * @param q - queue
  * @param elem - element to add
  * param timeout - max time in seconds to wait for enqueue
- * @return 0 if added successfully, 1 on timeout and 2 on different error.
+ * @return QSUCCESS if added successfully, QTIMEOUT on timeout and QERROR on different error.
  */
-int queue_enqueue(Queue* restrict const q, void* restrict const elem, uint8_t timeout)
+QueueErrorCode queue_enqueue(Queue* restrict const q, void* restrict const elem, uint8_t timeout)
 {
     if(q == NULL)
-        return 2;
+        return QERROR;
     if(elem == NULL)
-        return 2;
+        return QERROR;
     struct timespec time;
     struct timeval now;
 
@@ -147,7 +147,7 @@ int queue_enqueue(Queue* restrict const q, void* restrict const elem, uint8_t ti
     while(queue_is_full(q)) {
         if (pthread_cond_timedwait(&q->less_cv, &q->mutex, &time) != 0) {
             pthread_mutex_unlock(&q->mutex);
-            return 1;
+            return QTIMEOUT;
         }
     }
 
@@ -160,7 +160,7 @@ int queue_enqueue(Queue* restrict const q, void* restrict const elem, uint8_t ti
 
     pthread_cond_signal(&q->more_cv);
     pthread_mutex_unlock(&q->mutex);
-    return 0;
+    return QSUCCESS;
 }
 
 /**
@@ -168,16 +168,16 @@ int queue_enqueue(Queue* restrict const q, void* restrict const elem, uint8_t ti
  * @param q - queue
  * @param elem - element to delete
  * @param timeout - max time in seconds to wait for dequeue
- * @return 0 if removed successfully else -1.
+ * @return QSUCCESS if removed successfully, QTIMEOUT on timeout and QERROR on different error.
  */
-int queue_dequeue(Queue* restrict const q, void* restrict elem, uint8_t timeout)
+QueueErrorCode queue_dequeue(Queue* restrict const q, void* restrict elem, uint8_t timeout)
 {
     if(q == NULL)
-        return 2;
+        return QERROR;
     if(elem == NULL)
-        return 2;
+        return QERROR;
     if(queue_is_corrupted(q))
-        return 2;
+        return QERROR;
 
     struct timespec time;
     struct timeval now;
@@ -190,7 +190,7 @@ int queue_dequeue(Queue* restrict const q, void* restrict elem, uint8_t timeout)
     while (queue_is_empty(q)) {
         if(pthread_cond_timedwait(&q->more_cv, &q->mutex, &time)!=0){
             pthread_mutex_unlock(&q->mutex);
-            return 1;
+            return QTIMEOUT;
         }
     }
 
@@ -203,5 +203,5 @@ int queue_dequeue(Queue* restrict const q, void* restrict elem, uint8_t timeout)
     pthread_cond_signal(&q->less_cv);
     pthread_mutex_unlock(&q->mutex);
 
-    return 0;
+    return QSUCCESS;
 }

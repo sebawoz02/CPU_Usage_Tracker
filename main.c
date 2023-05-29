@@ -62,7 +62,7 @@ static void* reader_func(void* args)
         // Produce
         CPURawStats_t data = reader_load_data(g_no_cpus);
         // Add to the buffer
-        if(queue_enqueue(g_reader_analyzer_queue, &data, 2) != 0)
+        if(queue_enqueue(g_reader_analyzer_queue, &data, 2) != QSUCCESS)
         {
             logger_write("Reader error while adding data to the buffer", LOG_ERROR);
             pthread_exit(NULL);
@@ -111,7 +111,7 @@ static void* analyzer_func(void* args)
     {
         // Pop from buffer
         // Queue structure is thread safe
-        if (queue_dequeue(g_reader_analyzer_queue, data, 2) != 0)
+        if (queue_dequeue(g_reader_analyzer_queue, data, 2) != QSUCCESS)
         {
             logger_write("Analyzer error while removing data from the buffer", LOG_ERROR);
             break;
@@ -136,7 +136,7 @@ static void* analyzer_func(void* args)
                 to_print.cores_pr[j] =  analyzer_analyze(&prev_total[j+1], &prev_idle[j+1], data->cpus[j]);
 
             // Send to print
-            if(queue_enqueue(g_analyzer_printer_queue, &to_print, 2) != 0)
+            if(queue_enqueue(g_analyzer_printer_queue, &to_print, 2) != QSUCCESS)
             {
                 logger_write("Analyzer error while adding data to the buffer", LOG_ERROR);
                 break;
@@ -173,7 +173,7 @@ static void* printer_func(void* args)
     {
         size_t i;
         // Remove from buffer
-        if (queue_dequeue(g_analyzer_printer_queue, to_print, 2) != 0)
+        if (queue_dequeue(g_analyzer_printer_queue, to_print, 2) != QSUCCESS)
         {
             logger_write("Printer error while removing data from the buffer", LOG_ERROR);
             break;
@@ -298,7 +298,7 @@ int main(void)
     if(signal(SIGTERM, signal_handler)== SIG_ERR)
         return EXIT_FAILURE;
     // Create logger
-    if(logger_init() == -1)
+    if(logger_init() == LINIT_ERROR)
     {
         perror("Logger init error");
         return EXIT_FAILURE;

@@ -13,7 +13,13 @@ typedef enum
     LOG_DEBUG = 4
 } log_level_t;
 
-int logger_init(void);
+typedef enum
+{
+    LINIT_SUCCESS = 0,
+    LINIT_ERROR = 1
+} LoggerErrorCode;
+
+LoggerErrorCode logger_init(void);
 
 void logger_write(const char* msg, log_level_t log_level);
 
