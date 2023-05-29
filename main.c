@@ -56,11 +56,11 @@ static void signal_handler(int signum)
  */
 static void* reader_func(void* args)
 {
-    wd_communication_t* wdc = (wd_communication_t*) args;
+    WDCommunication * wdc = (WDCommunication *) args;
     while(1)
     {
         // Produce
-        CPURawStats_t data = reader_load_data(g_no_cpus);
+        CPURawStats data = reader_load_data(g_no_cpus);
         // Add to the buffer
         if(queue_enqueue(g_reader_analyzer_queue, &data, 2) != QSUCCESS)
         {
@@ -91,8 +91,8 @@ static void* reader_func(void* args)
  */
 static void* analyzer_func(void* args)
 {
-    wd_communication_t* wdc = (wd_communication_t*) args;
-    CPURawStats_t* data = malloc(sizeof(stats_t)*(g_no_cpus+1));
+    WDCommunication* wdc = (WDCommunication *) args;
+    CPURawStats* data = malloc(sizeof(Stats)*(g_no_cpus+1));
 
     bool first_iter = true;
 
@@ -126,7 +126,7 @@ static void* analyzer_func(void* args)
         }
         else
         {
-            usage_percentage_t to_print;
+            UsagePercentage to_print;
             to_print.cores_pr = malloc(sizeof(double)*(g_no_cpus));
             //Total
             to_print.total_pr =  analyzer_analyze(&prev_total[0], &prev_idle[0], data->total);
@@ -159,11 +159,11 @@ static void* analyzer_func(void* args)
  */
 static void* printer_func(void* args)
 {
-    wd_communication_t* wdc = (wd_communication_t*) args;
+    WDCommunication * wdc = (WDCommunication *) args;
     // system func - there should not be any problems related to thread safety as long as there are no other threads attempting to call system concurrently.
     system("clear");
     // printf("\t\t\033[3;33m*** CUT - CPU Usage Tracker ~ Sebastian Wozniak ***\033[0m\n");  // print here using tput
-    usage_percentage_t* to_print = malloc(sizeof(double)*(g_no_cpus+1));
+    UsagePercentage* to_print = malloc(sizeof(double)*(g_no_cpus+1));
     if(to_print == NULL)
     {
         logger_write("Allocation error in printer thread", LOG_ERROR);
@@ -221,7 +221,7 @@ static void* printer_func(void* args)
  */
 static void* watchdog_func(void* args)
 {
-    wd_communication_t* wdc = (wd_communication_t*) args;
+    WDCommunication* wdc = (WDCommunication *) args;
     struct timespec timeout;
     struct timeval now;
 
@@ -266,13 +266,13 @@ static void* watchdog_func(void* args)
  */
 static void queues_cleanup(void)
 {
-    CPURawStats_t to_free_1;
+    CPURawStats to_free_1;
     while(!queue_is_empty(g_reader_analyzer_queue))
     {
         queue_dequeue(g_reader_analyzer_queue, &to_free_1, 2);
         free(to_free_1.cpus);
     }
-    usage_percentage_t to_free_2;
+    UsagePercentage to_free_2;
     while(!queue_is_empty(g_analyzer_printer_queue))
     {
         queue_dequeue(g_analyzer_printer_queue,&to_free_2, 2);
@@ -312,7 +312,7 @@ int main(void)
         logger_destroy();
         return EXIT_FAILURE;
     }
-    g_reader_analyzer_queue = queue_create_new(10, sizeof(stats_t)*(g_no_cpus+1));
+    g_reader_analyzer_queue = queue_create_new(10, sizeof(Stats)*(g_no_cpus+1));
     if(g_reader_analyzer_queue == NULL)
     {
         logger_write("Create new queue error", LOG_ERROR);

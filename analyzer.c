@@ -1,6 +1,6 @@
 #include "analyzer.h"
 
-double analyzer_analyze(uint64_t* restrict prev_total, uint64_t* restrict prev_idle, const stats_t data)
+double analyzer_analyze(uint64_t* restrict prev_total, uint64_t* restrict prev_idle, const Stats data)
 {
     double percentage;
     uint64_t idle, non_idle, totald, idled;
@@ -19,7 +19,7 @@ double analyzer_analyze(uint64_t* restrict prev_total, uint64_t* restrict prev_i
     return percentage;
 }
 
-void analyzer_update_prev(uint64_t* restrict prev_total, uint64_t* restrict prev_idle, const CPURawStats_t data, const size_t no_cpus)
+void analyzer_update_prev(uint64_t* restrict prev_total, uint64_t* restrict prev_idle, const CPURawStats data, const size_t no_cpus)
 {
     uint32_t idle, non_idle;
 

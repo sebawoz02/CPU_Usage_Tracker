@@ -11,13 +11,13 @@
  * @return 0 on success, else -1
  */
 int watchdog_create_thread(pthread_t* thread, void* (*th_fun)(void*), pthread_t* wd_thread, void* (*watchdog_func) (void*)){
-    wd_communication_t* wdc = malloc(sizeof(*wdc));
+    WDCommunication * wdc = malloc(sizeof(*wdc));
     if(wdc == NULL){
         logger_write("Watchdog allocation error", LOG_ERROR);
         return -1;
     }
 
-    *wdc = (wd_communication_t){.mutex = PTHREAD_MUTEX_INITIALIZER,
+    *wdc = (WDCommunication){.mutex = PTHREAD_MUTEX_INITIALIZER,
                                 .signal_cv = PTHREAD_COND_INITIALIZER,
                                 .monitored_thread = *thread
                                 };
@@ -43,7 +43,7 @@ int watchdog_create_thread(pthread_t* thread, void* (*th_fun)(void*), pthread_t*
  * Sends signal to watchdog.
  * @param wdc - mutex and cond variable used to communicate with threads watchdog.
  */
-void watchdog_send_signal(wd_communication_t* wdc){
+void watchdog_send_signal(WDCommunication* wdc){
     pthread_mutex_lock(&wdc->mutex);
     pthread_cond_signal(&wdc->signal_cv);
     pthread_mutex_unlock(&wdc->mutex);

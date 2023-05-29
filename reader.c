@@ -90,10 +90,10 @@ size_t reader_get_no_cpus(void)
  * @param no_cpus - num of cpus to load
  * @return Pointer to the CPURawStats structure with loaded data of main cpu and no_cpus cores.
  */
-CPURawStats_t reader_load_data(size_t const no_cpus)
+CPURawStats reader_load_data(size_t const no_cpus)
 {
-    CPURawStats_t data;
-    data.cpus = malloc(sizeof(stats_t)*no_cpus);
+    CPURawStats data;
+    data.cpus = malloc(sizeof(Stats)*no_cpus);
 
     char* buffer = reader_load_to_buffer();
     // divide into lines

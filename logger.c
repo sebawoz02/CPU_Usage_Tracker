@@ -14,14 +14,16 @@ typedef struct log_line{
     char message[LOGGER_MSG_MAX_SIZE + 1];
 }log_line_t;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpadded"
 typedef struct Logger{
     pthread_t log_thread;   // 8B
-    bool term_flag; // 1B
-    char pad[7]; // 7B padding
-} logger_t;
+    atomic_bool term_flag; // 1B
+     // 7B padding
+} Logger;
+#pragma GCC diagnostic pop
 
-
-static logger_t* logger_instance = NULL;
+static Logger* logger_instance = NULL;
 static atomic_flag g_logger_initialized = ATOMIC_FLAG_INIT;
 static Queue* g_buffer;
 
@@ -55,10 +57,10 @@ static void* logger_func(void* args)
         pthread_exit(NULL);
     }
 
-    while(logger_instance->term_flag == false || !queue_is_empty(g_buffer))
+    while(atomic_load(&logger_instance->term_flag) == false || !queue_is_empty(g_buffer))
     {
         QueueErrorCode ret = QTIMEOUT;
-        while (logger_instance->term_flag == false && ret == QTIMEOUT)
+        while (atomic_load(&logger_instance->term_flag) == false && ret == QTIMEOUT)
             ret = queue_dequeue(g_buffer, new_log, 2);  // CHECK every 2 seconds if termination flag is not up
 
         char prefix[32];
@@ -111,8 +113,10 @@ LoggerErrorCode logger_init(void)
     if(atomic_flag_test_and_set(&g_logger_initialized) == 0)
     {
         g_buffer = queue_create_new(LOGGER_BUFFER_CAPACITY, sizeof(log_line_t));
-        logger_instance = malloc(sizeof(logger_t));
-        logger_instance->term_flag = false;
+        logger_instance = malloc(sizeof(Logger));
+        *logger_instance = (Logger){
+            .term_flag = ATOMIC_VAR_INIT(0)
+        };
         if (pthread_create(&logger_instance->log_thread, NULL, logger_func, NULL) != 0)
         {
             perror("Logger thread init error");
@@ -132,7 +136,7 @@ void logger_destroy(void)
 {
     if(logger_instance != NULL)
     {
-        logger_instance->term_flag = true;
+        atomic_store(&logger_instance->term_flag, true);
         pthread_join(logger_instance->log_thread, NULL);
         free(logger_instance);
         queue_delete(g_buffer);
@@ -148,7 +152,7 @@ void logger_write(const char* msg, log_level_t log_level)
 {
     if(logger_instance == NULL)
         return;
-    if(logger_instance->term_flag != 0)     // Logger is closed for receiving new messages
+    if(atomic_load(&logger_instance->term_flag) != false)     // Logger is closed for receiving new messages
         return;
     if(g_buffer == NULL)
         return;
