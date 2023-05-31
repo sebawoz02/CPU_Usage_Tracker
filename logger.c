@@ -7,7 +7,6 @@
 #include "logger.h"
 
 #define LOGGER_MSG_MAX_SIZE 255 // 256-th is null terminator
-#define LOGGER_BUFFER_CAPACITY 128
 
 typedef struct log_line{
     log_level_t log_level;
@@ -112,6 +111,8 @@ LoggerErrorCode logger_init(void)
 {
     if(atomic_flag_test_and_set(&g_logger_initialized) == 0)
     {
+        enum{LOGGER_BUFFER_CAPACITY = 128};
+
         g_buffer = queue_create_new(LOGGER_BUFFER_CAPACITY, sizeof(log_line_t));
         logger_instance = malloc(sizeof(Logger));
         *logger_instance = (Logger){
