@@ -41,15 +41,14 @@ static size_t g_no_cpus;
 // Watchdog flag to make sure only one watchdog can execute exit() function which is not thread-safe
 static atomic_flag g_wd_flag = ATOMIC_FLAG_INIT;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Watomic-implicit-seq-cst"
+
 // SIGTERM sets termination flag which tells all the threads to clean data and exit
 static void signal_handler(int signum)
 {
     if(signum == SIGTERM)
         g_termination_flag = 1;
 }
-#pragma GCC diagnostic pop
+
 
 /**
  * Reader thread function

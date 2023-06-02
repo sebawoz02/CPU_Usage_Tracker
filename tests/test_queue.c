@@ -23,6 +23,7 @@ static void test_queue_enqueue(void);
 static void test_queue_multiple_enqueue_dequeue(void);
 static void test_queue_with_cpurawstats(void);
 
+enum{timeout=2};
 
 static void test_queue_create(void)
 {
@@ -69,14 +70,14 @@ static void test_queue_enqueue(void)
     Queue* const q = queue_create_new(no_elems, elem_size);
     assert(q != NULL);
 
-    assert(queue_enqueue(NULL, &value_to_insert) != 0);
-    assert(queue_enqueue(q, NULL) != 0);
-    assert(queue_enqueue(NULL, NULL) != 0);
+    assert(queue_enqueue(NULL, &value_to_insert, timeout) == QERROR);
+    assert(queue_enqueue(q, NULL, timeout) == QERROR);
+    assert(queue_enqueue(NULL, NULL, timeout) == QERROR);
 
     assert(queue_is_empty(q));
     assert(!queue_is_full(q));
 
-    assert(queue_enqueue(q, &value_to_insert) == 0);
+    assert(queue_enqueue(q, &value_to_insert, timeout) == QSUCCESS);
 
     assert((volatile int)value_to_insert == 45);
 
@@ -100,15 +101,15 @@ static void test_queue_dequeue(void)
     assert(queue_is_empty(q));
     assert(!queue_is_full(q));
 
-    assert(queue_enqueue(q, &value_to_insert) == 0);
+    assert(queue_enqueue(q, &value_to_insert, timeout) == QSUCCESS);
     assert(!queue_is_empty(q));
     assert(!queue_is_full(q));
 
-    assert(queue_dequeue(NULL, &val) != 0);
-    assert(queue_dequeue(NULL, NULL) != 0);
-    assert(queue_dequeue(q, NULL) != 0);
+    assert(queue_dequeue(NULL, &val, timeout) == QERROR);
+    assert(queue_dequeue(NULL, NULL, timeout) == QERROR);
+    assert(queue_dequeue(q, NULL, timeout) == QERROR);
 
-    assert(queue_dequeue(q, &val) == 0);
+    assert(queue_dequeue(q, &val, timeout) == QSUCCESS);
 
     assert(val == value_to_insert);
 
@@ -132,29 +133,29 @@ static void test_queue_multiple_enqueue_dequeue(void)
     Queue* q = queue_create_new(no_elems, elem_size);
     assert(q != NULL);
 
-    assert(queue_enqueue(q, &values_to_insert[0])==0);
-    assert(queue_enqueue(q, &values_to_insert[1])==0);
+    assert(queue_enqueue(q, &values_to_insert[0], timeout)==QSUCCESS);
+    assert(queue_enqueue(q, &values_to_insert[1], timeout)==QSUCCESS);
 
     assert(!queue_is_full(q));
     assert(!queue_is_empty(q));
 
-    assert(queue_enqueue(q, &values_to_insert[2])==0);
-    assert(queue_enqueue(q, &values_to_insert[3])==0);
+    assert(queue_enqueue(q, &values_to_insert[2], timeout)==QSUCCESS);
+    assert(queue_enqueue(q, &values_to_insert[3], timeout)==QSUCCESS);
 
     assert(!queue_is_full(q));
     assert(!queue_is_empty(q));
 
-    assert(queue_dequeue(q, &val) == 0);
+    assert(queue_dequeue(q, &val, timeout) == QSUCCESS);
     assert(val==45);
-    assert(queue_dequeue(q, &val) == 0);
+    assert(queue_dequeue(q, &val, timeout) == QSUCCESS);
     assert(val==2);
 
     assert(!queue_is_full(q));
     assert(!queue_is_empty(q));
 
-    assert(queue_dequeue(q, &val) == 0);
+    assert(queue_dequeue(q, &val, timeout) == QSUCCESS);
     assert(val==23);
-    assert(queue_dequeue(q, &val) == 0);
+    assert(queue_dequeue(q, &val, timeout) == QSUCCESS);
     assert(val==15);
 
     assert(!queue_is_full(q));
@@ -172,18 +173,21 @@ static void test_queue_with_cpurawstats(void)
     assert(q != NULL);
     CPURawStats dequeued_stats;
 
-    assert(queue_enqueue(q, &stats) == 0);
+    assert(queue_enqueue(q, &stats, timeout) == QSUCCESS);
 
     stats = reader_load_data(cpus);
 
-    assert(queue_enqueue(q, &stats) == 0);
+    assert(queue_enqueue(q, &stats, timeout) == QSUCCESS);
 
     assert(queue_is_full(q));
 
-    assert(queue_dequeue(q, &dequeued_stats) == 0);
+    // enqueue to full queue should return timeout
+    assert(queue_enqueue(q, &stats, 1) == QTIMEOUT);
+
+    assert(queue_dequeue(q, &dequeued_stats, timeout) == QSUCCESS);
     free(dequeued_stats.cpus);
 
-    assert(queue_dequeue(q, &dequeued_stats) == 0);
+    assert(queue_dequeue(q, &dequeued_stats, timeout) == QSUCCESS);
 
     free(dequeued_stats.cpus);
 
