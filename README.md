@@ -6,16 +6,12 @@ The producer-consumer problem between threads is presented.
 - Analyzer thread ( consumer & producer ) - is responsible for calculating the percentage cpu usage from the data in the structure prepared by the reader and then sending it to the printer.
 - Printer thread ( consumer ) - prints the cpu usage for each core in the terminal
 - Watchdog threads - each thread above has its own thread monitoring its performance. If watchodg does not receive a signal within 2 seconds, it displays an error message and closes the program
-- Logger thread - receives messages from threads and writes them to the log_YYYYmmDd_HHmmss.txt file located in the logs folder
+- Logger thread - receives messages from threads and writes them to the log_YYYYmmDd_HHmmss.txt file.
 
 **How to compile and run program:**
 ```sh
-cd build
-make CUT
-./CUT
-```
-or
-```sh
+cmake build/
+export CC="your_fav_compiler --arg1 -- arg2"
 make CUT -C build
 ./build/CUT
 ```
